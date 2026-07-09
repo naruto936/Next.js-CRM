@@ -1,3 +1,4 @@
+/** Zoho CRM module API name for vendor invoices. */
 export const ZOHO_VENDOR_INVOICE_MODULE = "Vendor_Invoices";
 
 export const VENDOR_INVOICE_LIST_FIELDS = [

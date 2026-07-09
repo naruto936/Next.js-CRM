@@ -56,7 +56,7 @@ export async function GET(_request, context) {
     return Response.json(staticDetail);
   }
 
-  const apiNames = allVendorInvoiceDetailApiNames();
+  const apiNames = [...allVendorInvoiceDetailApiNames(), "Line_Item_List"];
 
   let row;
   try {
@@ -74,7 +74,7 @@ export async function GET(_request, context) {
     );
   }
 
-  const mapped = mapZohoRecord(row, apiNames);
+  const mapped = mapZohoRecord(row, allVendorInvoiceDetailApiNames());
   const lineItems = mapVendorInvoiceLineItems(row.Line_Item_List);
 
   return Response.json({

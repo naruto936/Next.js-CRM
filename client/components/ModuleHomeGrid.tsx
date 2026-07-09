@@ -53,7 +53,8 @@ const MODULES: ModuleCard[] = [
     description: "Statements of work and scopes.",
     href: "/sow",
     icon: FileSignature,
-    recordCount: 1,
+    useLiveRecordCount: true,
+    liveCountPath: "/api/sow?page=1",
   },
   {
     title: "Bids",
@@ -68,7 +69,8 @@ const MODULES: ModuleCard[] = [
     description: "Vendor billing and invoices.",
     href: "/vendor-invoice",
     icon: Receipt,
-    recordCount: 3,
+    useLiveRecordCount: true,
+    liveCountPath: "/api/vendor-invoice?page=1",
   },
   {
     title: "Vendor",

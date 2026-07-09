@@ -1,4 +1,5 @@
-export const ZOHO_SOW_MODULE = "SOW";
+/** Zoho CRM module API name (UI route remains `/sow`). */
+export const ZOHO_SOW_MODULE = "Deals";
 
 export const SOW_LIST_FIELDS = [
   "SOWID",

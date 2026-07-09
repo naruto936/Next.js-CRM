@@ -1,32 +1,16 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import SideBar from "@/components/SideBar";
 import SowTable from "@/components/SowTable";
-import type {
-  ContractFieldFilterSelection,
-  ContractFilterApplyPayload,
-} from "@/lib/contractFilterTypes";
-import {
-  SOW_STATIC_ALL_VIEW_ID,
-  SOW_STATIC_FILTER_FIELDS,
-  SOW_STATIC_FILTER_SECTIONS,
-} from "@/lib/sowStaticData";
+import type { ContractFilterApplyPayload } from "@/lib/contractFilterTypes";
 
 export default function SowPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchCriteria, setSearchCriteria] = useState<string | null>(null);
   const [customViewId, setCustomViewId] = useState<string | null>(null);
-  const [fieldSelections, setFieldSelections] = useState<ContractFieldFilterSelection[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number | null>(null);
   const [recordsLoading, setRecordsLoading] = useState(false);
-
-  const staticFilterMeta = useMemo(
-    () => ({
-      sections: SOW_STATIC_FILTER_SECTIONS,
-      fields: SOW_STATIC_FILTER_FIELDS,
-    }),
-    [],
-  );
 
   const handleFilteredTotalChange = useCallback((total: number | null) => {
     setFilteredTotal(total);
@@ -37,16 +21,12 @@ export default function SowPage() {
   }, []);
 
   const handleApplyFilters = useCallback((payload: ContractFilterApplyPayload) => {
+    setSearchCriteria(payload.criteria);
     setCustomViewId(payload.customViewId);
-    setFieldSelections(payload.fieldSelections ?? []);
-    if (!payload.customViewId || payload.customViewId === SOW_STATIC_ALL_VIEW_ID) {
-      if (!(payload.fieldSelections?.length ?? 0)) {
-        setFilteredTotal(null);
-      }
+    if (!payload.criteria && !payload.customViewId) {
+      setFilteredTotal(null);
     }
   }, []);
-
-  const listFiltersActive = fieldSelections.length > 0;
 
   return (
     <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-crm-canvas p-2 sm:p-3">
@@ -54,24 +34,23 @@ export default function SowPage() {
         <SideBar
           open={filtersOpen}
           onClose={() => setFiltersOpen(false)}
-          searchCriteria={null}
+          searchCriteria={searchCriteria}
           customViewId={customViewId}
           filteredTotal={filteredTotal}
           applyLoading={recordsLoading}
           onApplyFilters={handleApplyFilters}
+          filtersApiUrl="/api/sow/filters"
           filterPanelId="sow-filters"
           filterAriaLabel="SOW filters"
-          filterMetaOverride={staticFilterMeta}
-          listFiltersActive={listFiltersActive}
         />
         <SowTable
           filtersOpen={filtersOpen}
           onOpenFilters={() => setFiltersOpen(true)}
+          searchCriteria={searchCriteria}
           customViewId={customViewId}
-          fieldSelections={fieldSelections}
           onClearSearchCriteria={() => {
+            setSearchCriteria(null);
             setCustomViewId(null);
-            setFieldSelections([]);
             setFilteredTotal(null);
           }}
           onFilteredTotalChange={handleFilteredTotalChange}
