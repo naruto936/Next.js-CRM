@@ -266,6 +266,16 @@ type SideBarProps = {
   customViewId?: string | null;
   filteredTotal?: number | null;
   applyLoading?: boolean;
+  filtersApiUrl?: string;
+  filterPanelId?: string;
+  filterAriaLabel?: string;
+  /** When set, sidebar uses this metadata instead of fetching from the API. */
+  filterMetaOverride?: {
+    sections: ContractFilterSection[];
+    fields: ContractFilterFieldMeta[];
+  };
+  /** True when client-side field filters are applied (static list mode). */
+  listFiltersActive?: boolean;
 };
 
 function emptyManualDraft(field: ContractFilterFieldMeta): ManualFilterDraft {
@@ -280,6 +290,11 @@ export default function SideBar({
   customViewId = null,
   filteredTotal = null,
   applyLoading = false,
+  filtersApiUrl = "/api/contracts/filters",
+  filterPanelId = "contracts-filters",
+  filterAriaLabel = "Contract filters",
+  filterMetaOverride,
+  listFiltersActive = false,
 }: SideBarProps) {
   const applyClosePending = useRef(false);
   const [sections, setSections] = useState<ContractFilterSection[]>([]);
@@ -292,23 +307,31 @@ export default function SideBar({
   const [selectedCustomViewId, setSelectedCustomViewId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (searchCriteria == null && customViewId == null) {
+    if (searchCriteria == null && customViewId == null && !listFiltersActive) {
       setFieldSelections(new Map());
       setManualDrafts(new Map());
       setSelectedCustomViewId(null);
     } else if (customViewId) {
       setSelectedCustomViewId(customViewId);
     }
-  }, [searchCriteria, customViewId]);
+  }, [searchCriteria, customViewId, listFiltersActive]);
 
   useEffect(() => {
+    if (filterMetaOverride) {
+      setSections(filterMetaOverride.sections);
+      setFieldMeta(filterMetaOverride.fields);
+      setMetaLoading(false);
+      setMetaError(null);
+      return;
+    }
+
     let cancelled = false;
 
     async function load() {
       setMetaLoading(true);
       setMetaError(null);
       try {
-        const res = await fetch("/api/contracts/filters");
+        const res = await fetch(filtersApiUrl);
         const data = (await res.json()) as {
           sections?: ContractFilterSection[];
           fields?: ContractFilterFieldMeta[];
@@ -336,7 +359,7 @@ export default function SideBar({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [filtersApiUrl, filterMetaOverride]);
 
   const hasCheckboxFilters = [...fieldSelections.values()].some((s) => s.size > 0);
   const hasManualFilters = [...manualDrafts.entries()].some(([apiName, draft]) => {
@@ -349,7 +372,7 @@ export default function SideBar({
   });
   const hasPendingFilters =
     hasCheckboxFilters || hasManualFilters || Boolean(selectedCustomViewId);
-  const hasActiveFilter = Boolean(searchCriteria || customViewId);
+  const hasActiveFilter = Boolean(searchCriteria || customViewId || listFiltersActive);
 
   const hasVisibleSections = useMemo(() => {
     const q = filterSearch.trim().toLowerCase();
@@ -425,7 +448,7 @@ export default function SideBar({
     setManualDrafts(new Map());
     setSelectedCustomViewId(null);
     applyClosePending.current = false;
-    onApplyFilters({ criteria: null, customViewId: null });
+    onApplyFilters({ criteria: null, customViewId: null, fieldSelections: [] });
   }
 
   function applyFilters() {
@@ -433,7 +456,11 @@ export default function SideBar({
 
     if (selectedCustomViewId && !hasCheckboxFilters && !hasManualFilters) {
       applyClosePending.current = true;
-      onApplyFilters({ criteria: null, customViewId: selectedCustomViewId });
+      onApplyFilters({
+        criteria: null,
+        customViewId: selectedCustomViewId,
+        fieldSelections: [],
+      });
       return;
     }
 
@@ -465,7 +492,7 @@ export default function SideBar({
 
     const criteria = buildCriteriaFromFieldFilters(selections);
     applyClosePending.current = true;
-    onApplyFilters({ criteria, customViewId: null });
+    onApplyFilters({ criteria, customViewId: null, fieldSelections: selections });
   }
 
   return (
@@ -481,8 +508,8 @@ export default function SideBar({
       />
 
       <aside
-        id="contracts-filters"
-        aria-label="Contract filters"
+        id={filterPanelId}
+        aria-label={filterAriaLabel}
         className={cn(
           "flex min-h-0 w-[min(100vw-1rem,300px)] shrink-0 flex-col overflow-hidden rounded-xl border border-crm-border bg-crm-panel-muted",
           "max-md:fixed max-md:top-2 max-md:bottom-2 max-md:left-2 max-md:z-[100] max-md:shadow-2xl max-md:transition-transform max-md:duration-300 max-md:ease-out",

@@ -44,4 +44,6 @@ export type ContractFieldFilterSelection = {
 export type ContractFilterApplyPayload = {
   criteria: string | null;
   customViewId: string | null;
+  /** Client-side list filtering (service completions static demo). */
+  fieldSelections?: ContractFieldFilterSelection[];
 };

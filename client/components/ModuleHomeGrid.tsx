@@ -42,7 +42,7 @@ const MODULES: ModuleCard[] = [
     description: "Track and manage service work.",
     href: "/service-completions",
     icon: ClipboardCheck,
-    recordCount: 124,
+    recordCount: 6,
   },
   {
     title: "SOW",

@@ -4,8 +4,8 @@ import { fetchZohoJson, getZohoModuleFieldsUrl, ZOHO_CRM_BASE } from "@/lib/zoho
 
 const FILTER_META_CACHE_TTL_MS = 5 * 60 * 1000;
 
-/** @type {{ sections: import("@/lib/contractFilterTypes").ContractFilterSection[]; fields: import("@/lib/contractFilterTypes").ContractFilterFieldMeta[]; source: "zoho" | "fallback"; cachedAt: number } | null} */
-let filterMetaCache = null;
+/** @type {Map<string, { sections: import("@/lib/contractFilterTypes").ContractFilterSection[]; fields: import("@/lib/contractFilterTypes").ContractFilterFieldMeta[]; source: "zoho" | "fallback"; cachedAt: number }>} */
+const filterMetaCacheByModule = new Map();
 
 const RELATED_LOOKUP_TYPES = new Set([
   "lookup",
@@ -113,8 +113,8 @@ function discoverSubformModules(moduleFields) {
 }
 
 /** @returns {Promise<import("@/lib/contractFilterTypes").ContractFilterFieldMeta[]>} */
-async function loadSystemDefinedFilters() {
-  const url = `${ZOHO_CRM_BASE}/settings/custom_views?module=Contracts`;
+async function loadSystemDefinedFilters(module) {
+  const url = `${ZOHO_CRM_BASE}/settings/custom_views?module=${encodeURIComponent(module)}`;
   const { res, body } = await fetchZohoJson(url);
   if (!res.ok || !Array.isArray(body.custom_views)) return [];
 
@@ -134,16 +134,17 @@ async function loadSystemDefinedFilters() {
 }
 
 /** @returns {Promise<{ sections: import("@/lib/contractFilterTypes").ContractFilterSection[]; fields: import("@/lib/contractFilterTypes").ContractFilterFieldMeta[]; source: "zoho" | "fallback" }>} */
-export async function loadContractsFilterMeta() {
-  if (filterMetaCache && Date.now() - filterMetaCache.cachedAt < FILTER_META_CACHE_TTL_MS) {
+export async function loadModuleFilterMeta(module) {
+  const cached = filterMetaCacheByModule.get(module);
+  if (cached && Date.now() - cached.cachedAt < FILTER_META_CACHE_TTL_MS) {
     return {
-      sections: filterMetaCache.sections,
-      fields: filterMetaCache.fields,
-      source: filterMetaCache.source,
+      sections: cached.sections,
+      fields: cached.fields,
+      source: cached.source,
     };
   }
 
-  const zohoUrl = getZohoModuleFieldsUrl("Contracts");
+  const zohoUrl = getZohoModuleFieldsUrl(module);
 
   try {
     const { res, body } = await fetchZohoJson(zohoUrl);
@@ -152,7 +153,7 @@ export async function loadContractsFilterMeta() {
       throw new Error("Invalid fields response");
     }
 
-    const systemFields = await loadSystemDefinedFilters().catch((err) => {
+    const systemFields = await loadSystemDefinedFilters(module).catch((err) => {
       console.error("Zoho custom views for filters failed:", err);
       return [];
     });
@@ -220,7 +221,7 @@ export async function loadContractsFilterMeta() {
     })).filter((section) => section.fields.length > 0);
 
     const result = { sections, fields: allFields, source: /** @type {const} */ ("zoho") };
-    filterMetaCache = { ...result, cachedAt: Date.now() };
+    filterMetaCacheByModule.set(module, { ...result, cachedAt: Date.now() });
     return result;
   } catch (err) {
     console.error("Zoho filter metadata request failed:", err);
@@ -231,6 +232,11 @@ export async function loadContractsFilterMeta() {
     fields: [],
     source: /** @type {const} */ ("fallback"),
   };
-  filterMetaCache = { ...fallback, cachedAt: Date.now() };
+  filterMetaCacheByModule.set(module, { ...fallback, cachedAt: Date.now() });
   return fallback;
+}
+
+/** @returns {Promise<{ sections: import("@/lib/contractFilterTypes").ContractFilterSection[]; fields: import("@/lib/contractFilterTypes").ContractFilterFieldMeta[]; source: "zoho" | "fallback" }>} */
+export async function loadContractsFilterMeta() {
+  return loadModuleFilterMeta("Contracts");
 }
