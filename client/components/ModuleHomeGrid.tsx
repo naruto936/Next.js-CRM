@@ -49,7 +49,7 @@ const MODULES: ModuleCard[] = [
     description: "Statements of work and scopes.",
     href: "/sow",
     icon: FileSignature,
-    recordCount: 56,
+    recordCount: 1,
   },
   {
     title: "Bids",
