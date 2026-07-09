@@ -20,12 +20,6 @@ import {
   labelForServiceCompletionField,
   SERVICE_COMPLETION_LIST_FIELDS,
 } from "@/lib/serviceCompletionConfig";
-import type { ContractFieldFilterSelection } from "@/lib/contractFilterTypes";
-import {
-  filterStaticServiceCompletionRecords,
-  SERVICE_COMPLETION_STATIC_ALL_VIEW_ID,
-  SERVICE_COMPLETION_STATIC_RECORDS,
-} from "@/lib/serviceCompletionStaticData";
 
 const PAGE_SIZE = 100;
 
@@ -33,9 +27,6 @@ type ServiceCompletionRecord = {
   id: string;
   fields: Record<string, string>;
 };
-
-/** Service completions list uses static demo data (sidebar filters apply client-side). */
-const USE_STATIC_LIST_DATA = true;
 
 function openRecord(recordId: string) {
   window.open(`/service-completions/${recordId}`, "_blank", "noopener,noreferrer");
@@ -121,7 +112,6 @@ type ServiceCompletionsTableProps = {
   onOpenFilters?: () => void;
   searchCriteria?: string | null;
   customViewId?: string | null;
-  fieldSelections?: ContractFieldFilterSelection[];
   onClearSearchCriteria?: () => void;
   onFilteredTotalChange?: (total: number | null) => void;
   onRecordsLoadingChange?: (loading: boolean) => void;
@@ -178,7 +168,6 @@ export default function ServiceCompletionsTable({
   onOpenFilters,
   searchCriteria = null,
   customViewId = null,
-  fieldSelections = [],
   onClearSearchCriteria,
   onFilteredTotalChange,
   onRecordsLoadingChange,
@@ -208,61 +197,9 @@ export default function ServiceCompletionsTable({
 
   useEffect(() => {
     setPage(1);
-  }, [searchCriteria, customViewId, fieldSelections]);
-
-  const staticFilteredRecords = useMemo(() => {
-    if (!USE_STATIC_LIST_DATA) return [] as ServiceCompletionRecord[];
-    return filterStaticServiceCompletionRecords(SERVICE_COMPLETION_STATIC_RECORDS, {
-      fieldSelections,
-      customViewId,
-    });
-  }, [fieldSelections, customViewId]);
-
-  const pagedStaticRecords = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return staticFilteredRecords.slice(start, start + PAGE_SIZE);
-  }, [staticFilteredRecords, page]);
-
-  const staticHasMore = page * PAGE_SIZE < staticFilteredRecords.length;
+  }, [searchCriteria, customViewId]);
 
   useEffect(() => {
-    if (!USE_STATIC_LIST_DATA) return;
-
-    setLoading(true);
-    onRecordsLoadingChange?.(true);
-    setError(null);
-
-    const timer = window.setTimeout(() => {
-      setRecords(pagedStaticRecords);
-      const total = staticFilteredRecords.length;
-      setTotalCount(total);
-      const filtered =
-        fieldSelections.length > 0 ||
-        (customViewId != null && customViewId !== SERVICE_COMPLETION_STATIC_ALL_VIEW_ID);
-      if (filtered && onFilteredTotalChange) {
-        onFilteredTotalChange(total);
-      } else if (!filtered && onFilteredTotalChange) {
-        onFilteredTotalChange(null);
-      }
-      setHasMore(staticHasMore);
-      setLoading(false);
-      onRecordsLoadingChange?.(false);
-    }, 280);
-
-    return () => window.clearTimeout(timer);
-  }, [
-    pagedStaticRecords,
-    staticFilteredRecords.length,
-    staticHasMore,
-    fieldSelections,
-    customViewId,
-    onFilteredTotalChange,
-    onRecordsLoadingChange,
-  ]);
-
-  useEffect(() => {
-    if (USE_STATIC_LIST_DATA) return;
-
     let cancelled = false;
 
     async function loadRecords() {
@@ -333,10 +270,7 @@ export default function ServiceCompletionsTable({
     onRecordsLoadingChange,
   ]);
 
-  const listFiltersActive = fieldSelections.length > 0;
-  const showFilteredBadge =
-    listFiltersActive ||
-    (customViewId != null && customViewId !== SERVICE_COMPLETION_STATIC_ALL_VIEW_ID);
+  const showFilteredBadge = Boolean(searchCriteria || customViewId);
 
   const totalPages = totalCount != null ? Math.max(1, Math.ceil(totalCount / PAGE_SIZE)) : null;
   const totalLabel =
@@ -344,7 +278,7 @@ export default function ServiceCompletionsTable({
     : loading ? "—"
     : "0";
   const totalSuffix =
-    showFilteredBadge ? " matching records" : " sample records";
+    searchCriteria || customViewId ? " matching records" : " total in CRM";
 
   const colCount = Math.max(1, columnMeta.length);
 

@@ -23,8 +23,10 @@ type ModuleCard = {
   description: string;
   href: string;
   icon: LucideIcon;
-  /** Fetched from `/api/contracts` when true */
+  /** Fetched from live module API when set */
   useLiveRecordCount?: boolean;
+  /** API path for live count (defaults to contracts) */
+  liveCountPath?: string;
   /** Placeholder total until module APIs exist */
   recordCount?: number;
 };
@@ -36,13 +38,15 @@ const MODULES: ModuleCard[] = [
     href: "/contracts",
     icon: FileText,
     useLiveRecordCount: true,
+    liveCountPath: "/api/contracts?page=1",
   },
   {
     title: "Service completions",
     description: "Track and manage service work.",
     href: "/service-completions",
     icon: ClipboardCheck,
-    recordCount: 6,
+    useLiveRecordCount: true,
+    liveCountPath: "/api/service-completions?page=1",
   },
   {
     title: "SOW",
@@ -160,8 +164,8 @@ function ModuleCard({
 export default function ModuleHomeGrid() {
   const [ready, setReady] = useState(false);
   const [query, setQuery] = useState("");
-  const [contractCount, setContractCount] = useState<number | null>(null);
-  const [contractCountLoading, setContractCountLoading] = useState(true);
+  const [liveCounts, setLiveCounts] = useState<Record<string, number | null>>({});
+  const [liveCountsLoading, setLiveCountsLoading] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -172,22 +176,40 @@ export default function ModuleHomeGrid() {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadContractCount() {
-      setContractCountLoading(true);
+    async function loadLiveCounts() {
+      setLiveCountsLoading(true);
+      const modulesWithLive = MODULES.filter(
+        (m) => m.useLiveRecordCount && m.liveCountPath,
+      );
       try {
-        const res = await fetch("/api/contracts?page=1");
-        const data = (await res.json()) as { totalCount?: number; error?: string };
-        if (!cancelled && res.ok && typeof data.totalCount === "number") {
-          setContractCount(data.totalCount);
+        const entries = await Promise.all(
+          modulesWithLive.map(async (module) => {
+            const path = module.liveCountPath!;
+            try {
+              const res = await fetch(path);
+              const data = (await res.json()) as {
+                totalCount?: number;
+                contracts?: unknown[];
+                records?: unknown[];
+              };
+              if (res.ok && typeof data.totalCount === "number") {
+                return [module.href, data.totalCount] as const;
+              }
+            } catch {
+              /* ignore per-module failure */
+            }
+            return [module.href, null] as const;
+          }),
+        );
+        if (!cancelled) {
+          setLiveCounts(Object.fromEntries(entries));
         }
-      } catch {
-        if (!cancelled) setContractCount(null);
       } finally {
-        if (!cancelled) setContractCountLoading(false);
+        if (!cancelled) setLiveCountsLoading(false);
       }
     }
 
-    void loadContractCount();
+    void loadLiveCounts();
     return () => {
       cancelled = true;
     };
@@ -270,9 +292,11 @@ export default function ModuleHomeGrid() {
               <ModuleCard
                 module={module}
                 recordCount={
-                  module.useLiveRecordCount ? contractCount : (module.recordCount ?? null)
+                  module.useLiveRecordCount ?
+                    (liveCounts[module.href] ?? null)
+                  : (module.recordCount ?? null)
                 }
-                recordCountLoading={Boolean(module.useLiveRecordCount && contractCountLoading)}
+                recordCountLoading={Boolean(module.useLiveRecordCount && liveCountsLoading)}
               />
             </div>
           ))

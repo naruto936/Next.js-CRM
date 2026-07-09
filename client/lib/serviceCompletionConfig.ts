@@ -1,4 +1,4 @@
-export const ZOHO_SERVICE_COMPLETIONS_MODULE = "Service_Completions";
+export const ZOHO_SERVICE_COMPLETIONS_MODULE = "ServiceCompletions";
 
 export const SERVICE_COMPLETION_LIST_FIELDS = [
   "Name",
@@ -8,8 +8,16 @@ export const SERVICE_COMPLETION_LIST_FIELDS = [
   "Site_Number",
   "Contract",
   "Location_Name",
-  "Layout",
+  "Record_Status__s",
 ] as const;
+
+/** Not accepted on Zoho module list `fields` param (use $layout_id on record fetch). */
+export const SERVICE_COMPLETION_LIST_FIELDS_EXCLUDED_FROM_ZOHO = ["Layout"] as const;
+
+export function serviceCompletionFieldsForZohoList(apiNames: string[]) {
+  const excluded = new Set<string>(SERVICE_COMPLETION_LIST_FIELDS_EXCLUDED_FROM_ZOHO);
+  return apiNames.filter((name) => name && !excluded.has(name));
+}
 
 export type ServiceCompletionListField = (typeof SERVICE_COMPLETION_LIST_FIELDS)[number];
 

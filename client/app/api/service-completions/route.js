@@ -1,6 +1,7 @@
 import { fetchZohoJson, getZohoModuleSearchUrl, ZOHO_CRM_BASE } from "@/lib/zoho";
 import {
   parseServiceCompletionListFields,
+  serviceCompletionFieldsForZohoList,
   ZOHO_SERVICE_COMPLETIONS_MODULE,
 } from "@/lib/serviceCompletionConfig";
 import { mapZohoRecord } from "@/lib/zohoContractMap";
@@ -20,7 +21,8 @@ export async function GET(request) {
   const module = ZOHO_SERVICE_COMPLETIONS_MODULE;
 
   const visibleApiNames = parseServiceCompletionListFields(searchParams);
-  const zohoFields = ["id", ...visibleApiNames].join(",");
+  const zohoFetchNames = serviceCompletionFieldsForZohoList(visibleApiNames);
+  const zohoFields = ["id", ...zohoFetchNames].join(",");
   const criteria = searchParams.get("criteria")?.trim() || null;
   const cvid = searchParams.get("cvid")?.trim() || null;
 
@@ -79,9 +81,14 @@ export async function GET(request) {
   }
 
   if (!zohoRes.ok) {
+    const zohoMessage =
+      body?.message ??
+      body?.code ??
+      (typeof body?.details === "object" && body.details?.message) ??
+      "Zoho CRM error";
     return Response.json(
       {
-        error: "Zoho CRM error",
+        error: String(zohoMessage),
         status: zohoRes.status,
         details: body,
       },
