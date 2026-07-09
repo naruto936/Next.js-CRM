@@ -54,9 +54,9 @@ const MODULES: ModuleCard[] = [
   {
     title: "Bids",
     description: "Review and manage bids.",
-    href: "/Bids",
+    href: "/bids",
     icon: Gavel,
-    recordCount: 18,
+    recordCount: 3,
   },
   {
     title: "Vendor Invoice",
