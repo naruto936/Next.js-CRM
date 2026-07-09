@@ -39,7 +39,7 @@ export async function GET(_request, context) {
     return Response.json(staticDetail);
   }
 
-  const apiNames = allBidsDetailApiNames();
+  const apiNames = [...allBidsDetailApiNames(), "Bid_Line_Items"];
 
   let row;
   try {
@@ -57,18 +57,21 @@ export async function GET(_request, context) {
     );
   }
 
-  const mapped = mapZohoRecord(row, apiNames);
+  const mapped = mapZohoRecord(row, allBidsDetailApiNames());
   const lineItems = mapBidLineItems(row.Bid_Line_Items);
+
+  const layoutMeta = row.$layout_id ?? row.Layout;
+  const layoutLabel =
+    layoutMeta && typeof layoutMeta === "object" && layoutMeta.display_label ?
+      String(layoutMeta.display_label)
+    : layoutMeta && typeof layoutMeta === "object" && layoutMeta.name ?
+      String(layoutMeta.name)
+    : "";
 
   return Response.json({
     record: mapped,
     lineItems,
-    layoutLabel:
-      row.Layout && typeof row.Layout === "object" && row.Layout.display_label ?
-        String(row.Layout.display_label)
-      : row.Layout?.name ?
-        String(row.Layout.name)
-      : "",
+    layoutLabel,
     zohoRecordId: row.id != null ? String(row.id) : "",
   });
 }

@@ -60,7 +60,8 @@ const MODULES: ModuleCard[] = [
     description: "Review and manage bids.",
     href: "/bids",
     icon: Gavel,
-    recordCount: 3,
+    useLiveRecordCount: true,
+    liveCountPath: "/api/bids?page=1",
   },
   {
     title: "Vendor Invoice",
