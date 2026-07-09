@@ -1,47 +1,54 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import SideBar from "@/components/SideBar";
-import ContractsTable from "@/components/ContractTable";
+import VendorTable from "@/components/VendorTable";
 import type {
   ContractFieldFilterSelection,
   ContractFilterApplyPayload,
 } from "@/lib/contractFilterTypes";
-import { CONTRACTS_STATIC_ALL_VIEW_ID } from "@/lib/contractStaticData";
+import {
+  VENDOR_STATIC_ALL_VIEW_ID,
+  VENDOR_STATIC_FILTER_FIELDS,
+  VENDOR_STATIC_FILTER_SECTIONS,
+} from "@/lib/vendorStaticData";
 
-export default function ContractsPage() {
+export default function VendorsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [searchCriteria, setSearchCriteria] = useState<string | null>(null);
   const [customViewId, setCustomViewId] = useState<string | null>(null);
   const [fieldSelections, setFieldSelections] = useState<ContractFieldFilterSelection[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number | null>(null);
-  const [contractsLoading, setContractsLoading] = useState(false);
-  const [offlineDemo, setOfflineDemo] = useState(false);
+  const [recordsLoading, setRecordsLoading] = useState(false);
+
+  const staticFilterMeta = useMemo(
+    () => ({
+      sections: VENDOR_STATIC_FILTER_SECTIONS,
+      fields: VENDOR_STATIC_FILTER_FIELDS,
+    }),
+    [],
+  );
 
   const handleFilteredTotalChange = useCallback((total: number | null) => {
     setFilteredTotal(total);
   }, []);
 
-  const handleContractsLoadingChange = useCallback((loading: boolean) => {
-    setContractsLoading(loading);
-  }, []);
-
-  const handleOfflineDemoChange = useCallback((active: boolean) => {
-    setOfflineDemo(active);
+  const handleRecordsLoadingChange = useCallback((loading: boolean) => {
+    setRecordsLoading(loading);
   }, []);
 
   const handleApplyFilters = useCallback((payload: ContractFilterApplyPayload) => {
-    setSearchCriteria(payload.criteria);
     setCustomViewId(payload.customViewId);
     setFieldSelections(payload.fieldSelections ?? []);
-    if (!payload.criteria && !payload.customViewId && !(payload.fieldSelections?.length ?? 0)) {
-      setFilteredTotal(null);
+    if (!payload.customViewId || payload.customViewId === VENDOR_STATIC_ALL_VIEW_ID) {
+      if (!(payload.fieldSelections?.length ?? 0)) {
+        setFilteredTotal(null);
+      }
     }
   }, []);
 
   const listFiltersActive =
     fieldSelections.length > 0 ||
-    (customViewId != null && customViewId !== CONTRACTS_STATIC_ALL_VIEW_ID);
+    (customViewId != null && customViewId !== VENDOR_STATIC_ALL_VIEW_ID);
 
   return (
     <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-crm-canvas p-2 sm:p-3">
@@ -49,28 +56,28 @@ export default function ContractsPage() {
         <SideBar
           open={filtersOpen}
           onClose={() => setFiltersOpen(false)}
-          searchCriteria={offlineDemo ? null : searchCriteria}
+          searchCriteria={null}
           customViewId={customViewId}
           filteredTotal={filteredTotal}
-          applyLoading={contractsLoading}
+          applyLoading={recordsLoading}
           onApplyFilters={handleApplyFilters}
-          listFiltersActive={offlineDemo && listFiltersActive}
+          filterPanelId="vendors-filters"
+          filterAriaLabel="Vendor filters"
+          filterMetaOverride={staticFilterMeta}
+          listFiltersActive={listFiltersActive}
         />
-        <ContractsTable
+        <VendorTable
           filtersOpen={filtersOpen}
           onOpenFilters={() => setFiltersOpen(true)}
-          searchCriteria={offlineDemo ? null : searchCriteria}
           customViewId={customViewId}
           fieldSelections={fieldSelections}
           onClearSearchCriteria={() => {
-            setSearchCriteria(null);
             setCustomViewId(null);
             setFieldSelections([]);
             setFilteredTotal(null);
           }}
           onFilteredTotalChange={handleFilteredTotalChange}
-          onContractsLoadingChange={handleContractsLoadingChange}
-          onOfflineDemoChange={handleOfflineDemoChange}
+          onRecordsLoadingChange={handleRecordsLoadingChange}
         />
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { fetchZohoJson, getZohoModuleSearchUrl, ZOHO_CRM_BASE } from "@/lib/zoho";
+import { buildOfflineContractsListResponse } from "@/lib/contractStaticData";
 import {
   expandApiNamesForZohoFetch,
   getContractFieldDisplayValue,
@@ -60,7 +61,16 @@ export async function GET(request) {
   } catch (err) {
     console.error("Zoho CRM request failed:", err);
     const message = err instanceof Error ? err.message : "Failed to reach Zoho CRM";
-    return Response.json({ error: message }, { status: 502 });
+    const offline = buildOfflineContractsListResponse({
+      page,
+      perPage,
+      visibleApiNames,
+    });
+    return Response.json({
+      ...offline,
+      error: message,
+      zohoUnreachable: true,
+    });
   }
 
   const { res: zohoRes, body } = listResult;

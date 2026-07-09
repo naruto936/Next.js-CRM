@@ -1,4 +1,5 @@
 import { loadContractsFilterMeta } from "@/lib/contractFilterMeta";
+import { getContractsOfflineFilterMeta } from "@/lib/contractStaticData";
 import { getZohoModuleFieldsUrl } from "@/lib/zoho";
 
 export async function GET() {
@@ -12,13 +13,18 @@ export async function GET() {
       zohoUrl: getZohoModuleFieldsUrl("Contracts"),
       filterableCount: fields.length,
       sectionCount: sections.length,
+      offlineDemo: source === "offline-demo",
     });
   } catch (err) {
     console.error("Contract filters metadata failed:", err);
     const message = err instanceof Error ? err.message : "Failed to load filter metadata";
-    return Response.json(
-      { error: message, sections: [], fields: [], source: "fallback" },
-      { status: 502 },
-    );
+    const offline = getContractsOfflineFilterMeta();
+    return Response.json({
+      error: message,
+      sections: offline.sections,
+      fields: offline.fields,
+      source: offline.source,
+      offlineDemo: true,
+    });
   }
 }

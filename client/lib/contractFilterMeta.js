@@ -1,10 +1,11 @@
 import { HIDDEN_API_NAMES } from "@/lib/contractModuleFields";
+import { getContractsOfflineFilterMeta } from "@/lib/contractStaticData";
 import { getOperatorsForDataType } from "@/lib/zohoFilterOperators";
 import { fetchZohoJson, getZohoModuleFieldsUrl, ZOHO_CRM_BASE } from "@/lib/zoho";
 
 const FILTER_META_CACHE_TTL_MS = 5 * 60 * 1000;
 
-/** @type {Map<string, { sections: import("@/lib/contractFilterTypes").ContractFilterSection[]; fields: import("@/lib/contractFilterTypes").ContractFilterFieldMeta[]; source: "zoho" | "fallback"; cachedAt: number }>} */
+/** @type {Map<string, { sections: import("@/lib/contractFilterTypes").ContractFilterSection[]; fields: import("@/lib/contractFilterTypes").ContractFilterFieldMeta[]; source: "zoho" | "fallback" | "offline-demo"; cachedAt: number }>} */
 const filterMetaCacheByModule = new Map();
 
 const RELATED_LOOKUP_TYPES = new Set([
@@ -227,11 +228,7 @@ export async function loadModuleFilterMeta(module) {
     console.error("Zoho filter metadata request failed:", err);
   }
 
-  const fallback = {
-    sections: [],
-    fields: [],
-    source: /** @type {const} */ ("fallback"),
-  };
+  const fallback = getContractsOfflineFilterMeta();
   filterMetaCacheByModule.set(module, { ...fallback, cachedAt: Date.now() });
   return fallback;
 }

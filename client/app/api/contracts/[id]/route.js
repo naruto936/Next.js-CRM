@@ -6,6 +6,7 @@ import {
   mergeLegacyFieldValues,
 } from "@/lib/contractColumns";
 import { fetchZohoContractRecordById } from "@/lib/fetchZohoContractRecord";
+import { getStaticContractDetail, isStaticContractId } from "@/lib/contractStaticDetail";
 import { mapZohoRecord, parseVisibleFields } from "@/lib/zohoContractMap";
 
 export async function GET(request, context) {
@@ -17,6 +18,20 @@ export async function GET(request, context) {
   const recordId = String(id).trim();
   const { searchParams } = new URL(request.url);
   const scope = searchParams.get("scope");
+
+  if (isStaticContractId(recordId)) {
+    const staticDetail = getStaticContractDetail(recordId);
+    if (!staticDetail) {
+      return Response.json({ error: "Contract not found" }, { status: 404 });
+    }
+    return Response.json({
+      contract: {
+        ...staticDetail.record,
+        fields: mergeLegacyFieldValues(staticDetail.record.fields),
+      },
+      offlineDemo: true,
+    });
+  }
 
   let visibleApiNames;
 
@@ -40,6 +55,15 @@ export async function GET(request, context) {
     row = await fetchZohoContractRecordById(recordId, [...fieldSet]);
   } catch (err) {
     const status = err.status ?? 502;
+    if (isStaticContractId(recordId)) {
+      const staticDetail = getStaticContractDetail(recordId);
+      if (staticDetail) {
+        return Response.json({
+          contract: staticDetail.record,
+          offlineDemo: true,
+        });
+      }
+    }
     if (status === 404) {
       return Response.json({ error: "Contract not found" }, { status: 404 });
     }

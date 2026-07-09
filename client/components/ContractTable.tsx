@@ -29,6 +29,12 @@ import {
   normalizeContractFieldApiName,
   normalizeVisibleApiNames,
 } from "@/lib/contractColumns";
+import type { ContractFieldFilterSelection } from "@/lib/contractFilterTypes";
+import {
+  CONTRACTS_STATIC_ALL_VIEW_ID,
+  CONTRACTS_STATIC_RECORDS,
+  filterStaticContractRecords,
+} from "@/lib/contractStaticData";
 
 function openContractRecord(recordId: string) {
   window.open(`/contracts/${recordId}`, "_blank", "noopener,noreferrer");
@@ -139,9 +145,11 @@ type ContractsTableProps = {
   onOpenFilters?: () => void;
   searchCriteria?: string | null;
   customViewId?: string | null;
+  fieldSelections?: ContractFieldFilterSelection[];
   onClearSearchCriteria?: () => void;
   onFilteredTotalChange?: (total: number | null) => void;
   onContractsLoadingChange?: (loading: boolean) => void;
+  onOfflineDemoChange?: (active: boolean) => void;
 };
 
 function ContractCard({
@@ -197,9 +205,11 @@ export default function ContractsTable({
   onOpenFilters,
   searchCriteria = null,
   customViewId = null,
+  fieldSelections = [],
   onClearSearchCriteria,
   onFilteredTotalChange,
   onContractsLoadingChange,
+  onOfflineDemoChange,
 }: ContractsTableProps) {
   const { visibleApiNames, setVisibleApiNames } = useContractVisibleColumns();
   const [fieldCatalog, setFieldCatalog] = useState<CrmFieldMeta[]>(FALLBACK_FIELD_CATALOG);
@@ -210,6 +220,7 @@ export default function ContractsTable({
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [offlineDemo, setOfflineDemo] = useState(false);
 
   const handleFieldsLoaded = useCallback((fields: CrmFieldMeta[]) => {
     setFieldCatalog(fields);
@@ -243,7 +254,7 @@ export default function ContractsTable({
 
   useEffect(() => {
     setPage(1);
-  }, [searchCriteria, customViewId]);
+  }, [searchCriteria, customViewId, fieldSelections]);
 
   useEffect(() => {
     let cancelled = false;
@@ -270,24 +281,64 @@ export default function ContractsTable({
           totalCount?: number;
           hasMore?: boolean;
           filtered?: boolean;
+          offlineDemo?: boolean;
+          zohoUnreachable?: boolean;
           error?: string;
         };
 
-        if (!res.ok) {
+        const isOffline = Boolean(data.offlineDemo);
+        if (!cancelled) {
+          setOfflineDemo(isOffline);
+          onOfflineDemoChange?.(isOffline);
+        }
+
+        if (!isOffline && !res.ok) {
           throw new Error(data.error ?? "Failed to load contracts");
         }
 
         if (!cancelled) {
-          setContracts(data.contracts ?? []);
-          const total =
-            typeof data.totalCount === "number" ? data.totalCount : (data.contracts ?? []).length;
-          setTotalCount(total);
-          if (data.filtered && onFilteredTotalChange) {
-            onFilteredTotalChange(total);
-          } else if (!searchCriteria && !customViewId && onFilteredTotalChange) {
-            onFilteredTotalChange(null);
+          if (isOffline) {
+            const filtered = filterStaticContractRecords(CONTRACTS_STATIC_RECORDS, {
+              fieldSelections,
+              customViewId,
+            });
+            const rows: ContractRecord[] = filtered.map((r) => ({
+              id: r.id,
+              fields: Object.fromEntries(
+                columnsToShow.map((name) => [name, r.fields[name] ?? ""]),
+              ),
+            }));
+            const start = (page - 1) * PAGE_SIZE;
+            const slice = rows.slice(start, start + PAGE_SIZE);
+            setContracts(slice);
+            const total = rows.length;
+            setTotalCount(total);
+            const filteredActive =
+              fieldSelections.length > 0 ||
+              (customViewId != null && customViewId !== CONTRACTS_STATIC_ALL_VIEW_ID);
+            if (filteredActive && onFilteredTotalChange) {
+              onFilteredTotalChange(total);
+            } else if (!filteredActive && onFilteredTotalChange) {
+              onFilteredTotalChange(null);
+            }
+            setHasMore(start + PAGE_SIZE < rows.length);
+            if (data.zohoUnreachable && data.error) {
+              setError(null);
+            }
+          } else {
+            setContracts(data.contracts ?? []);
+            const total =
+              typeof data.totalCount === "number" ?
+                data.totalCount
+              : (data.contracts ?? []).length;
+            setTotalCount(total);
+            if (data.filtered && onFilteredTotalChange) {
+              onFilteredTotalChange(total);
+            } else if (!searchCriteria && !customViewId && onFilteredTotalChange) {
+              onFilteredTotalChange(null);
+            }
+            setHasMore(Boolean(data.hasMore));
           }
-          setHasMore(Boolean(data.hasMore));
         }
       } catch (err) {
         if (!cancelled) {
@@ -309,7 +360,17 @@ export default function ContractsTable({
     return () => {
       cancelled = true;
     };
-  }, [page, fieldsParam, searchCriteria, customViewId, onFilteredTotalChange, onContractsLoadingChange]);
+  }, [
+    page,
+    fieldsParam,
+    searchCriteria,
+    customViewId,
+    fieldSelections,
+    columnsToShow,
+    onFilteredTotalChange,
+    onContractsLoadingChange,
+    onOfflineDemoChange,
+  ]);
 
   const applyColumns = useCallback(
     (apiNames: string[]) => {
@@ -325,7 +386,20 @@ export default function ContractsTable({
     : loading ? "—"
     : "0";
   const totalSuffix =
-    searchCriteria || customViewId ? " matching records" : " total in CRM";
+    offlineDemo ?
+      fieldSelections.length > 0 ||
+      (customViewId != null && customViewId !== CONTRACTS_STATIC_ALL_VIEW_ID) ?
+        " matching sample records"
+      : " sample records"
+    : searchCriteria || customViewId ?
+      " matching records"
+    : " total in CRM";
+
+  const showFilteredBadge =
+    offlineDemo ?
+      fieldSelections.length > 0 ||
+      (customViewId != null && customViewId !== CONTRACTS_STATIC_ALL_VIEW_ID)
+    : Boolean(searchCriteria || customViewId);
 
   const colCount = Math.max(1, columnMeta.length);
 
@@ -414,7 +488,7 @@ export default function ContractsTable({
             : null}
             <div className="min-w-0 flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1 sm:gap-x-3">
               <h1 className="page-heading truncate text-base sm:text-lg">Contracts</h1>
-              {(searchCriteria || customViewId) && onClearSearchCriteria ?
+              {(showFilteredBadge) && onClearSearchCriteria ?
                 <button
                   type="button"
                   onClick={() => {
@@ -449,6 +523,13 @@ export default function ContractsTable({
             </Button>
           </div>
         </div>
+        {offlineDemo ?
+          <div className="border-b border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 sm:px-6 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+            Zoho CRM is unreachable. Showing sample contracts and demo filters. Reconnect to
+            load live data. Advanced text filters need Zoho; use status, vendor, and views
+            below.
+          </div>
+        : null}
         {error ?
           <div className="border-b border-red-900/50 bg-red-950/40 px-3 py-3 text-sm text-red-300 sm:px-6">
             {error}

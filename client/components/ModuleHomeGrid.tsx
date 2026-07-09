@@ -66,11 +66,11 @@ const MODULES: ModuleCard[] = [
     recordCount: 3,
   },
   {
-    title: "All vendors",
-    description: "Directory of all vendors.",
-    href: "/all-vendors",
+    title: "Vendor",
+    description: "Vendor directory and profiles.",
+    href: "/vendors",
     icon: Building2,
-    recordCount: 256,
+    recordCount: 4,
   },
 ];
 
