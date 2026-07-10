@@ -23,6 +23,7 @@ import {
   isUrlLikeField,
   looksLikeHttpUrl,
 } from "@/lib/contractColumns";
+import type { ContractScopeOfWorkRow } from "@/lib/contractScopeOfWork";
 import {
   getContractFieldLookupId,
   getContractLookupHref,
@@ -112,7 +113,11 @@ export default function ContractRecordView({ id }: ContractRecordViewProps) {
   const [recordSections, setRecordSections] = useState<CrmRecordSection[]>(() =>
     buildFallbackRecordSections(FALLBACK_FIELD_CATALOG),
   );
+  const [layoutDroppedFieldApiNames, setLayoutDroppedFieldApiNames] = useState<string[]>([]);
   const [contract, setContract] = useState<ContractRecord | null>(null);
+  const [scopeOfWorkByField, setScopeOfWorkByField] = useState<
+    Record<string, ContractScopeOfWorkRow[]>
+  >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -128,9 +133,11 @@ export default function ContractRecordView({ id }: ContractRecordViewProps) {
         const fieldsData = (await fieldsRes.json()) as {
           fields?: CrmFieldMeta[];
           sections?: CrmRecordSection[] | null;
+          droppedSectionFieldApiNames?: string[];
         };
         if (!cancelled && fieldsRes.ok && fieldsData.fields?.length) {
           setFieldCatalog(fieldsData.fields);
+          setLayoutDroppedFieldApiNames(fieldsData.droppedSectionFieldApiNames ?? []);
           if (fieldsData.sections?.length) {
             setRecordSections(fieldsData.sections);
           } else {
@@ -149,6 +156,7 @@ export default function ContractRecordView({ id }: ContractRecordViewProps) {
         });
         const data = (await res.json()) as {
           contract?: ContractRecord;
+          scopeOfWorkByField?: Record<string, ContractScopeOfWorkRow[]>;
           error?: string;
         };
 
@@ -158,6 +166,7 @@ export default function ContractRecordView({ id }: ContractRecordViewProps) {
 
         if (!cancelled) {
           setContract(data.contract ?? null);
+          setScopeOfWorkByField(data.scopeOfWorkByField ?? {});
         }
       } catch (err) {
         if (!cancelled) {
@@ -187,10 +196,13 @@ export default function ContractRecordView({ id }: ContractRecordViewProps) {
 
   const sectionGroups = useMemo(() => {
     if (!contract) return [];
-    return mergeSectionsWithCatalog(recordSections, fieldCatalog, (apiName) =>
-      getContractFieldDisplayValue(contract.fields, apiName),
+    return mergeSectionsWithCatalog(
+      recordSections,
+      fieldCatalog,
+      (apiName) => getContractFieldDisplayValue(contract.fields, apiName),
+      { droppedSectionFieldApiNames: layoutDroppedFieldApiNames },
     );
-  }, [contract, fieldCatalog, recordSections]);
+  }, [contract, fieldCatalog, layoutDroppedFieldApiNames, recordSections]);
 
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md border border-crm-border bg-crm-panel">
@@ -228,7 +240,7 @@ export default function ContractRecordView({ id }: ContractRecordViewProps) {
 
       <div
         className={cn(
-          "min-h-0 flex-1 px-3 py-4 sm:px-6 sm:py-6",
+          "min-h-0 flex-1 bg-crm-canvas px-3 py-4 sm:px-6 sm:py-6",
           loading ? "flex flex-col overflow-hidden" : "overflow-auto overscroll-contain",
         )}
       >
@@ -237,6 +249,7 @@ export default function ContractRecordView({ id }: ContractRecordViewProps) {
         : contract ?
           <ContractRecordSections
             groups={sectionGroups}
+            scopeOfWorkByField={scopeOfWorkByField}
             renderFieldValue={(props) => (
               <FieldValue
                 {...props}

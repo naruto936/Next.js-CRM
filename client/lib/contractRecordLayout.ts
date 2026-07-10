@@ -1,6 +1,7 @@
 import type { CrmFieldMeta } from "@/lib/contractColumns";
 import {
   filterCatalogForRecordView,
+  isExcludedContractFieldApiName,
   normalizeContractFieldApiName,
 } from "@/lib/contractColumns";
 
@@ -78,8 +79,35 @@ function slugSectionId(title: string, index: number) {
   return slug || `section-${index}`;
 }
 
-/** Parse Zoho layout API payload into ordered sections */
-export function parseZohoLayoutSections(layoutBody: unknown): CrmRecordSection[] | null {
+/** Zoho layout section for retired / deleted fields — hidden from this app. */
+export function isDeletedFieldsLayoutSection(title: string): boolean {
+  const normalized = title.trim().toLowerCase();
+  return normalized === "deleted fields" || /^deleted\s+field(s)?$/i.test(normalized);
+}
+
+function collectSectionFieldApiNames(
+  section: { fields?: { api_name?: string }[] },
+): string[] {
+  const fieldApiNames: string[] = [];
+  for (const field of section.fields ?? []) {
+    const api = field?.api_name?.trim();
+    if (!api || api === "id") continue;
+    const canonical = normalizeContractFieldApiName(api);
+    if (isExcludedContractFieldApiName(canonical)) continue;
+    if (!fieldApiNames.includes(canonical)) {
+      fieldApiNames.push(canonical);
+    }
+  }
+  return fieldApiNames;
+}
+
+export type ParsedZohoContractLayout = {
+  sections: CrmRecordSection[];
+  droppedSectionFieldApiNames: string[];
+};
+
+/** Parse Zoho layout API payload; omits Deleted Fields section and tracks its field API names. */
+export function parseZohoLayout(layoutBody: unknown): ParsedZohoContractLayout | null {
   if (!layoutBody || typeof layoutBody !== "object") return null;
   const layouts = (layoutBody as { layouts?: unknown[] }).layouts;
   if (!Array.isArray(layouts) || layouts.length === 0) return null;
@@ -98,6 +126,8 @@ export function parseZohoLayoutSections(layoutBody: unknown): CrmRecordSection[]
   if (!Array.isArray(rawSections)) return null;
 
   const sections: CrmRecordSection[] = [];
+  const droppedSectionFieldApiNames: string[] = [];
+  const droppedSeen = new Set<string>();
 
   const sortedRaw = [...rawSections].sort(
     (a, b) =>
@@ -122,20 +152,22 @@ export function parseZohoLayoutSections(layoutBody: unknown): CrmRecordSection[]
       section.api_name?.trim() ||
       "Section";
 
-    const fieldApiNames: string[] = [];
-    for (const field of section.fields ?? []) {
-      const api = field?.api_name?.trim();
-      if (!api || api === "id") continue;
-      const canonical = normalizeContractFieldApiName(api);
-      if (!fieldApiNames.includes(canonical)) {
-        fieldApiNames.push(canonical);
+    const fieldApiNames = collectSectionFieldApiNames(section);
+
+    if (isDeletedFieldsLayoutSection(title)) {
+      for (const api of fieldApiNames) {
+        if (!droppedSeen.has(api)) {
+          droppedSeen.add(api);
+          droppedSectionFieldApiNames.push(api);
+        }
       }
+      continue;
     }
 
     const isSubform =
       section.type === "subform" ||
-      fieldApiNames.length === 1 &&
-        /subform|scope_of_work|line_items/i.test(fieldApiNames[0] ?? "");
+      (fieldApiNames.length === 1 &&
+        /subform|scope_of_work|line_items/i.test(fieldApiNames[0] ?? ""));
 
     sections.push({
       id: slugSectionId(title, index),
@@ -145,7 +177,15 @@ export function parseZohoLayoutSections(layoutBody: unknown): CrmRecordSection[]
     });
   }
 
-  return sections.length > 0 ? sections : null;
+  if (sections.length === 0 && droppedSectionFieldApiNames.length === 0) return null;
+
+  return { sections, droppedSectionFieldApiNames };
+}
+
+/** Parse Zoho layout API payload into ordered sections (Deleted Fields section omitted). */
+export function parseZohoLayoutSections(layoutBody: unknown): CrmRecordSection[] | null {
+  const parsed = parseZohoLayout(layoutBody);
+  return parsed && parsed.sections.length > 0 ? parsed.sections : null;
 }
 
 /** When layout API is unavailable, bucket fields into coarse sections */
@@ -202,9 +242,17 @@ export function mergeSectionsWithCatalog(
   sections: CrmRecordSection[],
   catalog: CrmFieldMeta[],
   getValue: (apiName: string) => string,
+  options?: { droppedSectionFieldApiNames?: string[] },
 ): { section: CrmRecordSection; rows: RecordFieldRow[] }[] {
+  const dropped = new Set(
+    (options?.droppedSectionFieldApiNames ?? []).map((name) =>
+      normalizeContractFieldApiName(name),
+    ),
+  );
+
   const catalogMap = new Map<string, CrmFieldMeta>();
   for (const field of filterCatalogForRecordView(catalog)) {
+    if (dropped.has(field.apiName)) continue;
     catalogMap.set(field.apiName, field);
   }
 
@@ -212,9 +260,12 @@ export function mergeSectionsWithCatalog(
   const result: { section: CrmRecordSection; rows: RecordFieldRow[] }[] = [];
 
   for (const section of sections) {
+    if (isDeletedFieldsLayoutSection(section.title)) continue;
+
     const rows: RecordFieldRow[] = [];
     for (const apiName of section.fieldApiNames) {
       const canonical = normalizeContractFieldApiName(apiName);
+      if (isExcludedContractFieldApiName(canonical) || dropped.has(canonical)) continue;
       usedInSections.add(canonical);
       const meta = catalogMap.get(canonical) ?? {
         apiName: canonical,
@@ -230,7 +281,7 @@ export function mergeSectionsWithCatalog(
 
   const leftover: RecordFieldRow[] = [];
   for (const field of filterCatalogForRecordView(catalog)) {
-    if (usedInSections.has(field.apiName)) continue;
+    if (usedInSections.has(field.apiName) || dropped.has(field.apiName)) continue;
     leftover.push({ ...field, value: getValue(field.apiName) });
   }
 
@@ -253,23 +304,56 @@ export function mergeSectionsWithCatalog(
 export function collectRecordDetailApiNames(
   catalog: CrmFieldMeta[],
   sections: CrmRecordSection[] | null | undefined,
+  options?: { droppedSectionFieldApiNames?: string[] },
 ): string[] {
+  const dropped = new Set(
+    (options?.droppedSectionFieldApiNames ?? []).map((name) =>
+      normalizeContractFieldApiName(name),
+    ),
+  );
+
   const names = new Set<string>(["Name", "Contract_Status", "Record_Status"]);
+
+  const addField = (apiName: string) => {
+    const canonical = normalizeContractFieldApiName(apiName);
+    if (isExcludedContractFieldApiName(canonical) || dropped.has(canonical)) return;
+    names.add(canonical);
+  };
 
   if (sections?.length) {
     for (const section of sections) {
+      if (isDeletedFieldsLayoutSection(section.title)) continue;
       for (const apiName of section.fieldApiNames) {
-        names.add(normalizeContractFieldApiName(apiName));
+        addField(apiName);
       }
     }
     for (const field of filterCatalogForRecordView(catalog)) {
-      names.add(field.apiName);
+      addField(field.apiName);
     }
   } else {
     for (const field of filterCatalogForRecordView(catalog)) {
-      names.add(field.apiName);
+      addField(field.apiName);
     }
   }
 
   return [...names];
+}
+
+/** Subform field API names from Zoho layout (e.g. Scope_of_Work). */
+export function collectSubformFieldApiNames(
+  sections: CrmRecordSection[] | null | undefined,
+): string[] {
+  if (!sections?.length) return [];
+  const result: string[] = [];
+  const seen = new Set<string>();
+  for (const section of sections) {
+    if (section.kind !== "subform") continue;
+    for (const apiName of section.fieldApiNames) {
+      const canonical = normalizeContractFieldApiName(apiName);
+      if (!canonical || seen.has(canonical)) continue;
+      seen.add(canonical);
+      result.push(canonical);
+    }
+  }
+  return result;
 }

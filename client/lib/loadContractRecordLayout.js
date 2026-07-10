@@ -1,12 +1,12 @@
 import { fetchZohoJson, getZohoModuleLayoutsUrl } from "@/lib/zoho";
 import {
   buildFallbackRecordSections,
-  parseZohoLayoutSections,
+  parseZohoLayout,
 } from "@/lib/contractRecordLayout";
 
 /**
  * @param {import("@/lib/contractColumns").CrmFieldMeta[]} catalog
- * @returns {Promise<{ sections: import("@/lib/contractRecordLayout").CrmRecordSection[], source: "zoho" | "fallback" }>}
+ * @returns {Promise<{ sections: import("@/lib/contractRecordLayout").CrmRecordSection[], droppedSectionFieldApiNames: string[], source: "zoho" | "fallback" }>}
  */
 export async function loadContractsRecordSections(catalog) {
   const url = getZohoModuleLayoutsUrl("Contracts");
@@ -14,9 +14,13 @@ export async function loadContractsRecordSections(catalog) {
   try {
     const { res, body } = await fetchZohoJson(url);
     if (res.ok) {
-      const sections = parseZohoLayoutSections(body);
-      if (sections && sections.length > 0) {
-        return { sections, source: "zoho" };
+      const parsed = parseZohoLayout(body);
+      if (parsed && (parsed.sections.length > 0 || parsed.droppedSectionFieldApiNames.length > 0)) {
+        return {
+          sections: parsed.sections,
+          droppedSectionFieldApiNames: parsed.droppedSectionFieldApiNames,
+          source: /** @type {const} */ ("zoho"),
+        };
       }
     }
   } catch (err) {
@@ -25,6 +29,7 @@ export async function loadContractsRecordSections(catalog) {
 
   return {
     sections: buildFallbackRecordSections(catalog),
-    source: "fallback",
+    droppedSectionFieldApiNames: [],
+    source: /** @type {const} */ ("fallback"),
   };
 }

@@ -1,4 +1,5 @@
 import { HIDDEN_API_NAMES } from "@/lib/contractModuleFields";
+import { isExcludedContractCatalogField } from "@/lib/contractColumns";
 import { getContractsOfflineFilterMeta } from "@/lib/contractStaticData";
 import { getOperatorsForDataType } from "@/lib/zohoFilterOperators";
 import { fetchZohoJson, getZohoModuleFieldsUrl, ZOHO_CRM_BASE } from "@/lib/zoho";
@@ -166,11 +167,31 @@ export async function loadModuleFilterMeta(module) {
 
     for (const raw of body.fields) {
       if (isRelatedModuleField(raw)) {
+        if (
+          module === "Contracts" &&
+          isExcludedContractCatalogField({
+            apiName: String(raw.api_name ?? ""),
+            label: String(raw.field_label ?? raw.api_name ?? ""),
+            dataType: String(raw.data_type ?? "text"),
+          })
+        ) {
+          continue;
+        }
         const mapped = mapFilterField(raw, "related_modules");
         if (mapped) relatedFields.push(mapped);
       } else if (String(raw.data_type ?? "").toLowerCase() === "subform") {
         continue;
       } else {
+        if (
+          module === "Contracts" &&
+          isExcludedContractCatalogField({
+            apiName: String(raw.api_name ?? ""),
+            label: String(raw.field_label ?? raw.api_name ?? ""),
+            dataType: String(raw.data_type ?? "text"),
+          })
+        ) {
+          continue;
+        }
         const mapped = mapFilterField(raw, "fields");
         if (mapped) moduleFields.push(mapped);
       }

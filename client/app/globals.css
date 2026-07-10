@@ -267,6 +267,46 @@ body.crm-col-resizing {
   @apply font-semibold text-crm-text;
 }
 
+.crm-record-section-header {
+  border-left: 4px solid #2563eb;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #2563eb 14%, var(--crm-panel)) 0%,
+    color-mix(in srgb, #2563eb 6%, var(--crm-panel)) 100%
+  );
+  color: #1e3a8a;
+}
+
+.crm-record-section-header:hover {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #2563eb 20%, var(--crm-panel)) 0%,
+    color-mix(in srgb, #2563eb 10%, var(--crm-panel)) 100%
+  );
+}
+
+.dark .crm-record-section-header {
+  border-left-color: #60a5fa;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #3b82f6 28%, var(--crm-panel)) 0%,
+    color-mix(in srgb, #3b82f6 12%, var(--crm-panel)) 100%
+  );
+  color: #dbeafe;
+}
+
+.dark .crm-record-section-header:hover {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #3b82f6 36%, var(--crm-panel)) 0%,
+    color-mix(in srgb, #3b82f6 18%, var(--crm-panel)) 100%
+  );
+}
+
+.dark .crm-record-section {
+  box-shadow: 0 4px 14px rgb(0 0 0 / 35%);
+}
+
 .column-heading {
   @apply text-xs font-semibold uppercase tracking-wide text-crm-text-muted;
 }

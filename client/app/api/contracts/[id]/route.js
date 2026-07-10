@@ -1,10 +1,11 @@
 import { loadContractsFieldCatalog } from "@/lib/contractModuleFields";
 import { loadContractsRecordSections } from "@/lib/loadContractRecordLayout";
-import { collectRecordDetailApiNames } from "@/lib/contractRecordLayout";
+import { collectRecordDetailApiNames, collectSubformFieldApiNames } from "@/lib/contractRecordLayout";
 import {
   expandApiNamesForZohoFetch,
   mergeLegacyFieldValues,
 } from "@/lib/contractColumns";
+import { mapContractScopeOfWork } from "@/lib/contractScopeOfWork";
 import { fetchZohoContractRecordById } from "@/lib/fetchZohoContractRecord";
 import { getStaticContractDetail, isStaticContractId } from "@/lib/contractStaticDetail";
 import { mapZohoRecord, parseVisibleFields } from "@/lib/zohoContractMap";
@@ -35,12 +36,18 @@ export async function GET(request, context) {
   }
 
   let visibleApiNames;
+  let layoutSections = null;
+  let droppedSectionFieldApiNames = [];
 
   if (scope === "detail") {
     try {
       const { fields } = await loadContractsFieldCatalog();
-      const { sections } = await loadContractsRecordSections(fields);
-      visibleApiNames = collectRecordDetailApiNames(fields, sections);
+      const layout = await loadContractsRecordSections(fields);
+      layoutSections = layout.sections;
+      droppedSectionFieldApiNames = layout.droppedSectionFieldApiNames ?? [];
+      visibleApiNames = collectRecordDetailApiNames(fields, layoutSections, {
+        droppedSectionFieldApiNames,
+      });
     } catch (err) {
       console.error("Failed to load field catalog for record:", err);
       visibleApiNames = parseVisibleFields(searchParams);
@@ -49,7 +56,20 @@ export async function GET(request, context) {
     visibleApiNames = parseVisibleFields(searchParams);
   }
 
+  const subformApiNames = collectSubformFieldApiNames(layoutSections);
+  const scopeOfWorkFieldCandidates = [
+    ...subformApiNames,
+    ...(subformApiNames.length === 0 ? ["Scope_of_Work"] : []),
+  ];
+
   const fieldSet = new Set(expandApiNamesForZohoFetch(["Name", ...visibleApiNames]));
+  for (const api of scopeOfWorkFieldCandidates) {
+    fieldSet.add(api);
+  }
+
+  const scalarApiNames = [...fieldSet].filter(
+    (name) => !scopeOfWorkFieldCandidates.includes(name),
+  );
 
   let row;
   try {
@@ -84,8 +104,19 @@ export async function GET(request, context) {
     );
   }
 
-  const contract = mapZohoRecord(row, [...fieldSet]);
+  const contract = mapZohoRecord(row, scalarApiNames.length > 0 ? scalarApiNames : [...fieldSet]);
   contract.fields = mergeLegacyFieldValues(contract.fields);
+
+  /** @type {Record<string, import("@/lib/contractScopeOfWork").ContractScopeOfWorkRow[]>} */
+  const scopeOfWorkByField = {};
+  for (const apiName of scopeOfWorkFieldCandidates) {
+    const raw = row[apiName];
+    if (raw == null) continue;
+    const lines = mapContractScopeOfWork(raw);
+    if (lines.length > 0) {
+      scopeOfWorkByField[apiName] = lines;
+    }
+  }
 
   return Response.json({
     contract: {
@@ -93,6 +124,7 @@ export async function GET(request, context) {
       fields: contract.fields,
       lookups: contract.lookups,
     },
+    scopeOfWorkByField,
     visibleFields: [...fieldSet],
   });
 }

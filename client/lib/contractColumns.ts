@@ -40,6 +40,66 @@ export function normalizeContractFieldApiName(apiName: string): string {
   return normalizeStoredApiName(apiName);
 }
 
+/** Fields from Zoho that are not used on the contracts UI. */
+const EXCLUDED_CONTRACT_FIELD_API_NAMES = new Set([
+  "Vendor_Contract",
+  "Client_Addendum_old",
+  "Client_Addendum_Old",
+  "Hide_Unsubscribe_Time",
+  "Unsubscribe_Mode",
+  "Unsubscribed_Mode",
+  "Unsubscribed_Time",
+  "Sales_Order_Id",
+  "Sales_Order_ID",
+  "Sales_Orders_Books_ID",
+  "Sales_Orders_Books_Id",
+  "Sales_Order_Books_ID",
+  "Sales_Order_Books_Id",
+]);
+
+const EXCLUDED_CONTRACT_FIELD_LABELS = new Set([
+  "vendor contract",
+  "client addendum -old",
+  "client addendum old",
+  "hide unsubscribe time",
+  "unsubscribe mode",
+  "unsubscribed mode",
+  "unsubscribed time",
+  "sales order id",
+  "sales orders books id",
+  "sales order books id",
+]);
+
+export function isExcludedContractFieldApiName(
+  apiName: string,
+  dataType?: string,
+  label?: string,
+): boolean {
+  const canonical = normalizeStoredApiName(apiName);
+  const type = (dataType ?? "").toLowerCase();
+  const normalizedLabel = (label ?? "").trim().toLowerCase();
+
+  if (EXCLUDED_CONTRACT_FIELD_API_NAMES.has(canonical)) return true;
+  if (EXCLUDED_CONTRACT_FIELD_LABELS.has(normalizedLabel)) return true;
+
+  if (/client.*addendum.*old/i.test(canonical)) return true;
+  if (/^hide_.*unsubscribe.*time$/i.test(canonical)) return true;
+  if (/^unsubscrib(e|ed)_(mode|time)$/i.test(canonical)) return true;
+  if (/^sales_order_id$/i.test(canonical)) return true;
+  if (/sales.*order.*books.*id/i.test(canonical)) return true;
+
+  if (type === "image" || type === "profileimage") return true;
+  if (/^record_image$/i.test(canonical)) return true;
+  if (/contract/i.test(canonical) && /image/i.test(canonical)) return true;
+  if (/^contract\s+image/i.test(normalizedLabel)) return true;
+
+  return false;
+}
+
+export function isExcludedContractCatalogField(field: CrmFieldMeta): boolean {
+  return isExcludedContractFieldApiName(field.apiName, field.dataType, field.label);
+}
+
 /** Deduplicated canonical API names for visible columns (localStorage + UI). */
 export function normalizeVisibleApiNames(apiNames: string[]): string[] {
   const seen = new Set<string>();
@@ -48,6 +108,7 @@ export function normalizeVisibleApiNames(apiNames: string[]): string[] {
     if (!name || typeof name !== "string") continue;
     const canonical = normalizeStoredApiName(name.trim());
     if (!canonical || seen.has(canonical)) continue;
+    if (isExcludedContractFieldApiName(canonical)) continue;
     seen.add(canonical);
     result.push(canonical);
   }
@@ -59,6 +120,7 @@ export function filterCatalogForRecordView(catalog: CrmFieldMeta[]): CrmFieldMet
 
   for (const field of catalog) {
     const canonical = normalizeStoredApiName(field.apiName);
+    if (isExcludedContractCatalogField({ ...field, apiName: canonical })) continue;
     const existing = byCanonical.get(canonical);
 
     if (!existing || field.apiName === canonical) {
@@ -190,17 +252,20 @@ export function loadVisibleApiNames(): string[] {
 
   if (!loaded) return [...DEFAULT_VISIBLE_API_NAMES];
 
+  const normalized = normalizeVisibleApiNames(loaded);
+
   const rawV1 = localStorage.getItem(CONTRACTS_COLUMNS_STORAGE_KEY);
   const needsPersist =
     !fromV1 ||
     fromV2 != null ||
-    (rawV1 != null && JSON.stringify(loaded) !== rawV1);
+    (rawV1 != null && JSON.stringify(normalized) !== rawV1) ||
+    normalized.length !== loaded.length;
 
   if (needsPersist) {
-    localStorage.setItem(CONTRACTS_COLUMNS_STORAGE_KEY, JSON.stringify(loaded));
+    localStorage.setItem(CONTRACTS_COLUMNS_STORAGE_KEY, JSON.stringify(normalized));
   }
 
-  return loaded;
+  return normalized.length > 0 ? normalized : [...DEFAULT_VISIBLE_API_NAMES];
 }
 
 export function saveVisibleApiNames(apiNames: string[]) {

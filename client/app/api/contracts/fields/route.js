@@ -1,14 +1,30 @@
 import { getZohoModuleFieldsUrl } from "@/lib/zoho";
-import { FALLBACK_FIELD_CATALOG } from "@/lib/contractColumns";
+import {
+  FALLBACK_FIELD_CATALOG,
+  isExcludedContractCatalogField,
+  normalizeContractFieldApiName,
+} from "@/lib/contractColumns";
 import { buildFallbackRecordSections } from "@/lib/contractRecordLayout";
 import { loadContractsFieldCatalog } from "@/lib/contractModuleFields";
 import { loadContractsRecordSections } from "@/lib/loadContractRecordLayout";
+
+function filterClientFields(fields, droppedSectionFieldApiNames) {
+  const dropped = new Set(
+    (droppedSectionFieldApiNames ?? []).map((name) => normalizeContractFieldApiName(name)),
+  );
+  return fields.filter(
+    (f) =>
+      !dropped.has(normalizeContractFieldApiName(f.apiName)) &&
+      !isExcludedContractCatalogField(f),
+  );
+}
 
 function fallbackPayload(warning) {
   const fields = FALLBACK_FIELD_CATALOG.map((f) => ({ ...f, visible: true }));
   return {
     fields,
     sections: buildFallbackRecordSections(fields),
+    droppedSectionFieldApiNames: [],
     sectionSource: "fallback",
     source: "fallback",
     warning,
@@ -21,16 +37,19 @@ export async function GET() {
 
   try {
     const { fields, source } = await loadContractsFieldCatalog();
-    const { sections, source: sectionSource } = await loadContractsRecordSections(fields);
+    const { sections, droppedSectionFieldApiNames, source: sectionSource } =
+      await loadContractsRecordSections(fields);
+    const clientFields = filterClientFields(fields, droppedSectionFieldApiNames);
 
     if (source === "zoho") {
       return Response.json({
-        fields,
+        fields: clientFields,
         sections,
+        droppedSectionFieldApiNames,
         sectionSource,
         source: "zoho",
         zohoUrl,
-        count: fields.length,
+        count: clientFields.length,
       });
     }
 

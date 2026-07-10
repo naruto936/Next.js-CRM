@@ -1,5 +1,5 @@
 import { fetchZohoJson, getZohoModuleFieldsUrl } from "@/lib/zoho";
-import { FALLBACK_FIELD_CATALOG } from "@/lib/contractColumns";
+import { FALLBACK_FIELD_CATALOG, isExcludedContractCatalogField } from "@/lib/contractColumns";
 
 export const HIDDEN_API_NAMES = new Set([
   "$approval_state",
@@ -48,6 +48,7 @@ export async function loadContractsFieldCatalog() {
         .filter((f) => f.api_name && !HIDDEN_API_NAMES.has(f.api_name))
         .filter((f) => f.api_name !== "id")
         .map(mapZohoField)
+        .filter((f) => !isExcludedContractCatalogField(f))
         .sort((a, b) => a.label.localeCompare(b.label));
 
       const result = { fields, source: /** @type {const} */ ("zoho") };
