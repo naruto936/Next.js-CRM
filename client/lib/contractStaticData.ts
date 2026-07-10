@@ -7,6 +7,7 @@ import type {
 export type StaticContractRecord = {
   id: string;
   fields: Record<string, string>;
+  lookups?: Record<string, string>;
 };
 
 function picklistField(
@@ -96,11 +97,16 @@ export const CONTRACTS_STATIC_RECORDS: StaticContractRecord[] = [
       Name: "Test-Standard Solar_VC_2025-2",
       Contract_Status: "Active",
       Vendor: "Ghazanfar Ali Dev Test",
+      SOW_Name: "SOW30073",
       Company_Name: "Standard Solar",
       Site: "Standard Solar- SS2712",
       Contract_Start_Date: "2025-08-01",
       Contract_End_Date: "2026-08-30",
       Owner: "Gabriel Brent",
+    },
+    lookups: {
+      Vendor: "static-vendor-1001",
+      SOW_Name: "2168928000114292432",
     },
   },
   {
@@ -232,6 +238,7 @@ export function buildOfflineContractsListResponse({
     fields: Object.fromEntries(
       visibleApiNames.map((name) => [name, r.fields[name] ?? ""]),
     ),
+    lookups: r.lookups,
   }));
 
   const start = (page - 1) * perPage;

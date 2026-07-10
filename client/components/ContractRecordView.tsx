@@ -23,6 +23,11 @@ import {
   isUrlLikeField,
   looksLikeHttpUrl,
 } from "@/lib/contractColumns";
+import {
+  getContractFieldLookupId,
+  getContractLookupHref,
+  isContractLookupField,
+} from "@/lib/contractRecordLookups";
 
 type ContractStatus = "Active" | "Closed";
 
@@ -48,14 +53,36 @@ function FieldValue({
   apiName,
   value,
   dataType,
+  lookupId,
+  fieldLabel,
 }: {
   apiName: string;
   value: string;
   dataType: string;
+  lookupId?: string;
+  fieldLabel?: string;
 }) {
   const display = formatCellForDisplay(value, dataType);
   if (!display) return <span className="text-crm-text-muted">—</span>;
   if (isStatusField(apiName)) return <StatusBadge status={display} />;
+
+  const lookupHref =
+    lookupId && isContractLookupField(apiName, fieldLabel) ?
+      getContractLookupHref(apiName, lookupId)
+    : null;
+  if (lookupHref) {
+    return (
+      <a
+        href={lookupHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={display}
+        className="block min-w-0 truncate text-crm-link hover:underline"
+      >
+        {display}
+      </a>
+    );
+  }
 
   const showAsUrl = looksLikeHttpUrl(display) || isUrlLikeField(apiName, dataType);
   if (showAsUrl) {
@@ -210,7 +237,13 @@ export default function ContractRecordView({ id }: ContractRecordViewProps) {
         : contract ?
           <ContractRecordSections
             groups={sectionGroups}
-            renderFieldValue={(props) => <FieldValue {...props} />}
+            renderFieldValue={(props) => (
+              <FieldValue
+                {...props}
+                lookupId={getContractFieldLookupId(contract.lookups, props.apiName)}
+                fieldLabel={props.label}
+              />
+            )}
           />
         : !error ?
           <p className="py-12 text-center text-sm text-crm-text-muted">Contract not found.</p>

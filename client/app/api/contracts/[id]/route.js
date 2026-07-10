@@ -28,6 +28,7 @@ export async function GET(request, context) {
       contract: {
         ...staticDetail.record,
         fields: mergeLegacyFieldValues(staticDetail.record.fields),
+        lookups: staticDetail.record.lookups,
       },
       offlineDemo: true,
     });
@@ -87,7 +88,11 @@ export async function GET(request, context) {
   contract.fields = mergeLegacyFieldValues(contract.fields);
 
   return Response.json({
-    contract,
+    contract: {
+      id: contract.id,
+      fields: contract.fields,
+      lookups: contract.lookups,
+    },
     visibleFields: [...fieldSet],
   });
 }

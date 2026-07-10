@@ -5,6 +5,7 @@ const DETAIL_FIELD_NAMES = [
   "Name",
   "Contract_Status",
   "Vendor",
+  "SOW_Name",
   "Company_Name",
   "Site",
   "Contract_Start_Date",
@@ -22,6 +23,16 @@ for (const row of CONTRACTS_STATIC_RECORDS) {
   STATIC_DETAIL_BY_ID[row.id] = {
     id: row.id,
     ...row.fields,
+    Vendor: {
+      name: row.fields.Vendor ?? "",
+      id: row.lookups?.Vendor ?? "static-vendor-1001",
+    },
+    SOW_Name: row.fields.SOW_Name
+      ? {
+          name: row.fields.SOW_Name,
+          id: row.lookups?.SOW_Name ?? "2168928000114292432",
+        }
+      : null,
     Created_Time: "2025-08-01T09:00:00-05:00",
     Modified_Time: "2026-01-10T14:30:00-05:00",
     Created_By: { name: row.fields.Owner ?? "Olio Group", id: "demo-created" },

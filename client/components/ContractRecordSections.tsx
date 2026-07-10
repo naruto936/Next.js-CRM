@@ -9,6 +9,7 @@ type FieldValueRendererProps = {
   apiName: string;
   value: string;
   dataType: string;
+  label?: string;
 };
 
 type ContractRecordSectionsProps = {
@@ -33,6 +34,7 @@ function RecordFieldGrid({
               apiName: row.apiName,
               value: row.value,
               dataType: row.dataType,
+              label: row.label,
             })}
           </dd>
         </div>

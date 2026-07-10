@@ -29,15 +29,29 @@ export function formatFieldValue(value) {
   return str;
 }
 
+function extractLookupId(value) {
+  if (value == null || value === "") return "";
+  if (typeof value === "object" && !Array.isArray(value) && value.id != null) {
+    return String(value.id);
+  }
+  return "";
+}
+
 export function mapZohoRecord(row, visibleApiNames) {
   const fields = {};
+  const lookups = {};
+
   for (const apiName of visibleApiNames) {
-    fields[apiName] = formatFieldValue(row[apiName]);
+    const raw = row[apiName];
+    fields[apiName] = formatFieldValue(raw);
+    const lookupId = extractLookupId(raw);
+    if (lookupId) lookups[apiName] = lookupId;
   }
 
   return {
     id: row.id != null ? String(row.id) : "",
     fields,
+    lookups: Object.keys(lookups).length > 0 ? lookups : undefined,
   };
 }
 

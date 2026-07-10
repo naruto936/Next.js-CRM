@@ -168,6 +168,7 @@ export const DEFAULT_VISIBLE_API_NAMES = [
 export const FALLBACK_FIELD_CATALOG: CrmFieldMeta[] = [
   { apiName: "Contract_Status", label: "Contract Status", dataType: "picklist" },
   { apiName: "Vendor", label: "Vendor", dataType: "lookup" },
+  { apiName: "SOW_Name", label: "SOW Name", dataType: "lookup" },
   { apiName: "Contract_End_Date", label: "Contract End Date", dataType: "date" },
   { apiName: "Contract_Start_Date", label: "Contract Start Date", dataType: "date" },
   { apiName: "Company_Name", label: "Company Name", dataType: "lookup" },
@@ -217,6 +218,8 @@ export function buildFieldsQueryParam(visibleApiNames: string[]) {
 export type ContractRecord = {
   id: string;
   fields: Record<string, string>;
+  /** Zoho lookup record ids keyed by field api_name (e.g. Vendor, SOW_Name). */
+  lookups?: Record<string, string>;
 };
 
 export function formatCellForDisplay(value: unknown, dataType?: string): string {

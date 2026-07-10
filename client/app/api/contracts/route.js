@@ -9,7 +9,8 @@ import { mapZohoRecord, parseVisibleFields } from "@/lib/zohoContractMap";
 
 function mapListContract(row, visibleApiNames) {
   const fetchNames = expandApiNamesForZohoFetch(visibleApiNames);
-  const merged = mergeLegacyFieldValues(mapZohoRecord(row, fetchNames).fields);
+  const mapped = mapZohoRecord(row, fetchNames);
+  const merged = mergeLegacyFieldValues(mapped.fields);
   const fields = {};
   for (const apiName of visibleApiNames) {
     fields[apiName] = getContractFieldDisplayValue(merged, apiName);
@@ -17,6 +18,7 @@ function mapListContract(row, visibleApiNames) {
   return {
     id: row.id != null ? String(row.id) : "",
     fields,
+    lookups: mapped.lookups,
   };
 }
 

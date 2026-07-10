@@ -35,6 +35,11 @@ import {
   CONTRACTS_STATIC_RECORDS,
   filterStaticContractRecords,
 } from "@/lib/contractStaticData";
+import {
+  getContractFieldLookupId,
+  getContractLookupHref,
+  isContractLookupField,
+} from "@/lib/contractRecordLookups";
 
 function openContractRecord(recordId: string) {
   window.open(`/contracts/${recordId}`, "_blank", "noopener,noreferrer");
@@ -86,15 +91,65 @@ function TruncateWrap({
   );
 }
 
-function CellContent({
+function openLookupRecord(href: string) {
+  window.open(href, "_blank", "noopener,noreferrer");
+}
+
+function LookupFieldCell({
   apiName,
   value,
+  lookupId,
 }: {
   apiName: string;
   value: string;
+  lookupId?: string;
+}) {
+  const display = value || "—";
+  const href =
+    lookupId && value ? getContractLookupHref(apiName, lookupId) : null;
+
+  if (!href) {
+    return (
+      <TruncateWrap title={value || undefined}>
+        <span className="text-crm-text">{display}</span>
+      </TruncateWrap>
+    );
+  }
+
+  return (
+    <TruncateWrap title={value}>
+      <button
+        type="button"
+        className="max-w-full cursor-pointer truncate text-left text-crm-link hover:underline"
+        onClick={(e) => {
+          e.stopPropagation();
+          openLookupRecord(href);
+        }}
+      >
+        {display}
+      </button>
+    </TruncateWrap>
+  );
+}
+
+function CellContent({
+  apiName,
+  label,
+  value,
+  lookupId,
+}: {
+  apiName: string;
+  label?: string;
+  value: string;
+  lookupId?: string;
 }) {
   if (isStatusField(apiName)) {
     return <StatusBadge status={value || "Active"} />;
+  }
+  if (isContractLookupField(apiName, label)) {
+    return (
+      <LookupFieldCell apiName={apiName} value={value} lookupId={lookupId} />
+    );
   }
   if (apiName === "Vendor" || apiName === "Company_Name" || apiName === "Name" || isLongTextColumn(apiName)) {
     const display = value || "—";
@@ -177,7 +232,7 @@ function ContractCard({
           openContractRecord(row.id);
         }
       }}
-      className="crm-row-hover cursor-pointer rounded-lg border border-crm-border bg-crm-panel p-3 transition hover:border-zinc-400 dark:hover:border-zinc-600"
+      className="crm-row-hover rounded-lg border border-crm-border bg-crm-panel p-3 transition hover:border-zinc-400 dark:hover:border-zinc-600"
     >
       <p className="mb-3 truncate text-sm font-medium text-crm-text">{title}</p>
       <dl className="space-y-2.5 text-sm">
@@ -190,7 +245,12 @@ function ContractCard({
             <div key={col.apiName}>
               <dt className="column-heading">{col.label}</dt>
               <dd className="mt-0.5">
-                <CellContent apiName={col.apiName} value={value} />
+                <CellContent
+                  apiName={col.apiName}
+                  label={col.label}
+                  value={value}
+                  lookupId={getContractFieldLookupId(row.lookups, col.apiName)}
+                />
               </dd>
             </div>
           );
@@ -307,6 +367,7 @@ export default function ContractsTable({
               fields: Object.fromEntries(
                 columnsToShow.map((name) => [name, r.fields[name] ?? ""]),
               ),
+              lookups: r.lookups,
             }));
             const start = (page - 1) * PAGE_SIZE;
             const slice = rows.slice(start, start + PAGE_SIZE);
@@ -604,7 +665,7 @@ export default function ContractsTable({
                             key={row.id}
                             role="link"
                             tabIndex={0}
-                            className="crm-row-hover cursor-pointer border-crm-border text-crm-text"
+                            className="crm-row-hover border-crm-border text-crm-text"
                             onClick={() => openContractRecord(row.id)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
@@ -621,13 +682,19 @@ export default function ContractsTable({
                                 const raw = getContractFieldDisplayValue(row.fields, col.apiName);
                                 const value = formatCellForDisplay(raw, col.dataType);
                                 const cellClass = getColumnCellClass(col, i, "body");
+                                const lookupId = getContractFieldLookupId(row.lookups, col.apiName);
                                 return (
                                   <TableCell
                                     key={col.apiName}
                                     className={cellClass}
                                     style={columnSizeStyle(col)}
                                   >
-                                    <CellContent apiName={col.apiName} value={value} />
+                                    <CellContent
+                                      apiName={col.apiName}
+                                      label={col.label}
+                                      value={value}
+                                      lookupId={lookupId}
+                                    />
                                   </TableCell>
                                 );
                               },
