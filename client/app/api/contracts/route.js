@@ -1,4 +1,5 @@
-import { fetchZohoJson, getZohoModuleSearchUrl, ZOHO_CRM_BASE } from "@/lib/zoho";
+import { fetchZohoJson, ZOHO_CRM_BASE } from "@/lib/zoho";
+import { buildZohoModuleListUrls, parseListSearchParam } from "@/lib/zohoListQuery";
 import { buildOfflineContractsListResponse } from "@/lib/contractStaticData";
 import {
   expandApiNamesForZohoFetch,
@@ -30,27 +31,20 @@ export async function GET(request) {
   const visibleApiNames = parseVisibleFields(searchParams);
   const fetchFieldNames = expandApiNamesForZohoFetch(visibleApiNames);
   const zohoFields = ["id", ...fetchFieldNames].join(",");
-  const criteria = searchParams.get("criteria")?.trim() || null;
+  const rawCriteria = searchParams.get("criteria")?.trim() || null;
+  const { criteria, filters } = parseListSearchParam(rawCriteria);
   const cvid = searchParams.get("cvid")?.trim() || null;
 
-  const listUrl =
-    cvid ?
-      `${ZOHO_CRM_BASE}/Contracts?cvid=${encodeURIComponent(cvid)}&fields=${encodeURIComponent(zohoFields)}&per_page=${perPage}&page=${page}`
-    : criteria ?
-      getZohoModuleSearchUrl("Contracts", {
-        criteria,
-        fields: zohoFields,
-        page,
-        perPage,
-      })
-    : `${ZOHO_CRM_BASE}/Contracts?fields=${encodeURIComponent(zohoFields)}&per_page=${perPage}&page=${page}`;
-
-  const countUrl =
-    cvid ?
-      `${ZOHO_CRM_BASE}/Contracts/actions/count?cvid=${encodeURIComponent(cvid)}`
-    : criteria ?
-      `${ZOHO_CRM_BASE}/Contracts/actions/count?criteria=${encodeURIComponent(criteria)}`
-    : `${ZOHO_CRM_BASE}/Contracts/actions/count`;
+  const { listUrl, countUrl } = buildZohoModuleListUrls({
+    module: "Contracts",
+    base: ZOHO_CRM_BASE,
+    fields: zohoFields,
+    page,
+    perPage,
+    criteria,
+    filters,
+    cvid,
+  });
 
   let listResult;
   let countResult;
@@ -76,6 +70,7 @@ export async function GET(request) {
   }
 
   const { res: zohoRes, body } = listResult;
+  const filtered = Boolean(criteria || filters || cvid);
 
   if (zohoRes.status === 204) {
     let totalCount = 0;
@@ -90,9 +85,9 @@ export async function GET(request) {
       perPage,
       hasMore: false,
       visibleFields: visibleApiNames,
-      criteria,
+      criteria: rawCriteria,
       cvid,
-      filtered: Boolean(criteria || cvid),
+      filtered,
     });
   }
 
@@ -124,8 +119,8 @@ export async function GET(request) {
     perPage,
     hasMore: Boolean(body.info?.more_records),
     visibleFields: visibleApiNames,
-    criteria,
+    criteria: rawCriteria,
     cvid,
-    filtered: Boolean(criteria || cvid),
+    filtered,
   });
 }

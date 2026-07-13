@@ -20,8 +20,9 @@ export function clearFilterMetaCache() {
   filterMetaCacheByModule.clear();
 }
 
-// Bust in-memory layout/option cache whenever this module is reloaded (dev HMR / deploy).
+// Bust cache when operator lists / layout options change (dev HMR + deploys).
 clearFilterMetaCache();
+
 
 const RELATED_LOOKUP_TYPES = new Set([
   "lookup",

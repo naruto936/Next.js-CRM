@@ -1,4 +1,5 @@
-import { fetchZohoJson, getZohoModuleSearchUrl, ZOHO_CRM_BASE } from "@/lib/zoho";
+import { fetchZohoJson, ZOHO_CRM_BASE } from "@/lib/zoho";
+import { buildZohoModuleListUrls, parseListSearchParam } from "@/lib/zohoListQuery";
 import {
   parseVendorInvoiceListFields,
   ZOHO_VENDOR_INVOICE_MODULE,
@@ -21,27 +22,20 @@ export async function GET(request) {
 
   const visibleApiNames = parseVendorInvoiceListFields(searchParams);
   const zohoFields = ["id", ...visibleApiNames].join(",");
-  const criteria = searchParams.get("criteria")?.trim() || null;
+  const rawCriteria = searchParams.get("criteria")?.trim() || null;
+  const { criteria, filters } = parseListSearchParam(rawCriteria);
   const cvid = searchParams.get("cvid")?.trim() || null;
 
-  const listUrl =
-    cvid ?
-      `${ZOHO_CRM_BASE}/${encodeURIComponent(module)}?cvid=${encodeURIComponent(cvid)}&fields=${encodeURIComponent(zohoFields)}&per_page=${perPage}&page=${page}`
-    : criteria ?
-      getZohoModuleSearchUrl(module, {
-        criteria,
-        fields: zohoFields,
-        page,
-        perPage,
-      })
-    : `${ZOHO_CRM_BASE}/${encodeURIComponent(module)}?fields=${encodeURIComponent(zohoFields)}&per_page=${perPage}&page=${page}`;
-
-  const countUrl =
-    cvid ?
-      `${ZOHO_CRM_BASE}/${encodeURIComponent(module)}/actions/count?cvid=${encodeURIComponent(cvid)}`
-    : criteria ?
-      `${ZOHO_CRM_BASE}/${encodeURIComponent(module)}/actions/count?criteria=${encodeURIComponent(criteria)}`
-    : `${ZOHO_CRM_BASE}/${encodeURIComponent(module)}/actions/count`;
+  const { listUrl, countUrl } = buildZohoModuleListUrls({
+    module,
+    base: ZOHO_CRM_BASE,
+    fields: zohoFields,
+    page,
+    perPage,
+    criteria,
+    filters,
+    cvid,
+  });
 
   let listResult;
   let countResult;
@@ -72,9 +66,9 @@ export async function GET(request) {
       perPage,
       hasMore: false,
       visibleFields: visibleApiNames,
-      criteria,
+      criteria: rawCriteria,
       cvid,
-      filtered: Boolean(criteria || cvid),
+      filtered: Boolean(criteria || filters || cvid),
     });
   }
 
@@ -111,8 +105,8 @@ export async function GET(request) {
     perPage,
     hasMore: Boolean(body.info?.more_records),
     visibleFields: visibleApiNames,
-    criteria,
+    criteria: rawCriteria,
     cvid,
-    filtered: Boolean(criteria || cvid),
+    filtered: Boolean(criteria || filters || cvid),
   });
 }

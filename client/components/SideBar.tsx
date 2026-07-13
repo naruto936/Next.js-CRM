@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Filter, Loader2, Search, X } from "lucide-react";
+import { Bookmark, ChevronDown, Filter, Loader2, Search, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FilterSidebarFieldsSkeleton } from "@/components/LoadingShimmer";
 import {
-  buildCriteriaFromFieldFilters,
+  buildSearchParamFromFieldFilters,
   selectionsFromCheckboxState,
 } from "@/lib/buildContractFilterCriteria";
 import {
@@ -15,6 +15,12 @@ import {
   isUserLikeDataType,
   looksLikeZohoId,
 } from "@/lib/resolveFilterValues";
+import {
+  createSavedFilterId,
+  loadSavedFilters,
+  persistSavedFilters,
+  type SavedFilterPreset,
+} from "@/lib/savedFilters";
 import type {
   ContractFieldFilterSelection,
   ContractFilterApplyPayload,
@@ -91,7 +97,7 @@ function FilterSectionGroup({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="group flex w-full items-center gap-2 px-2 py-2.5 transition hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+        className="group flex w-full cursor-pointer items-center gap-2 px-2 py-2.5 transition hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
       >
         <ChevronDown
           className={cn(
@@ -151,6 +157,8 @@ type ManualFilterDraft = {
 };
 
 function defaultOperator(field: ContractFilterFieldMeta) {
+  const contains = field.operators.find((op) => op.id === "contains");
+  if (contains) return "contains";
   return field.operators[0]?.id ?? "equals";
 }
 
@@ -168,6 +176,8 @@ function fieldUsesIdSuggestions(field: ContractFilterFieldMeta) {
     Boolean(field.lookupModule)
   );
 }
+
+const MIN_SUGGESTION_CHARS = 3;
 
 function FilterValueSuggestionInput({
   field,
@@ -249,12 +259,25 @@ function FilterValueSuggestionInput({
 
   function scheduleFetch(q: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (q.length < MIN_SUGGESTION_CHARS) {
+      abortRef.current?.abort();
+      setSuggestions([]);
+      setLoading(false);
+      return;
+    }
     debounceRef.current = setTimeout(() => fetchSuggestions(q), 250);
   }
 
   function handleFocus() {
     setOpen(true);
-    fetchSuggestions(inputText.trim());
+    const q = inputText.trim();
+    if (q.length >= MIN_SUGGESTION_CHARS) {
+      fetchSuggestions(q);
+    } else {
+      abortRef.current?.abort();
+      setSuggestions([]);
+      setLoading(false);
+    }
   }
 
   function handleChange(next: string) {
@@ -280,6 +303,9 @@ function FilterValueSuggestionInput({
     }
   }
 
+  const trimmedInput = inputText.trim();
+  const needsMoreChars = trimmedInput.length > 0 && trimmedInput.length < MIN_SUGGESTION_CHARS;
+
   return (
     <div ref={wrapRef} className="relative">
       <input
@@ -293,7 +319,13 @@ function FilterValueSuggestionInput({
       />
       {open ?
         <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 max-h-48 overflow-y-auto rounded-lg border border-crm-border bg-crm-panel shadow-lg">
-          {loading ?
+          {trimmedInput.length < MIN_SUGGESTION_CHARS ?
+            <p className="px-3 py-2 text-xs text-crm-text-muted">
+              {needsMoreChars ?
+                `Type at least ${MIN_SUGGESTION_CHARS} characters…`
+              : `Type ${MIN_SUGGESTION_CHARS}+ characters for suggestions`}
+            </p>
+          : loading ?
             <div className="flex items-center gap-2 px-3 py-2 text-xs text-crm-text-muted">
               <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
               Loading…
@@ -306,7 +338,7 @@ function FilterValueSuggestionInput({
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelect(opt)}
-                className="flex w-full px-3 py-2 text-left text-sm text-crm-text transition hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
+                className="flex w-full cursor-pointer px-3 py-2 text-left text-sm text-crm-text transition hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
               >
                 <span className="min-w-0 truncate">{opt.label}</span>
               </button>
@@ -347,7 +379,7 @@ function FieldFilterSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="group flex w-full items-center justify-between rounded-lg px-2 py-2 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+        className="group flex w-full cursor-pointer items-center justify-between rounded-lg px-2 py-2 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
       >
         <span
           className={cn(
@@ -507,12 +539,21 @@ export default function SideBar({
   const [fieldSelections, setFieldSelections] = useState<Map<string, Set<string>>>(() => new Map());
   const [manualDrafts, setManualDrafts] = useState<Map<string, ManualFilterDraft>>(() => new Map());
   const [selectedCustomViewId, setSelectedCustomViewId] = useState<string | null>(null);
+  const [savedFilters, setSavedFilters] = useState<SavedFilterPreset[]>([]);
+  const [saveName, setSaveName] = useState("");
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [activeSavedFilterId, setActiveSavedFilterId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSavedFilters(loadSavedFilters(zohoModule));
+  }, [zohoModule]);
 
   useEffect(() => {
     if (searchCriteria == null && customViewId == null && !listFiltersActive) {
       setFieldSelections(new Map());
       setManualDrafts(new Map());
       setSelectedCustomViewId(null);
+      setActiveSavedFilterId(null);
     } else if (customViewId) {
       setSelectedCustomViewId(customViewId);
     }
@@ -572,8 +613,6 @@ export default function SideBar({
     }
     return draft.value.trim().length > 0;
   });
-  const hasPendingFilters =
-    hasCheckboxFilters || hasManualFilters || Boolean(selectedCustomViewId);
   const hasActiveFilter = Boolean(searchCriteria || customViewId || listFiltersActive);
 
   const displaySections = useMemo(() => {
@@ -638,6 +677,7 @@ export default function SideBar({
 
   function toggleFieldValue(apiName: string, value: string) {
     setSelectedCustomViewId(null);
+    setActiveSavedFilterId(null);
     setFieldSelections((prev) => {
       const next = new Map(prev);
       const set = new Set(next.get(apiName) ?? []);
@@ -651,6 +691,7 @@ export default function SideBar({
 
   function updateManualDraft(apiName: string, field: ContractFilterFieldMeta, patch: Partial<ManualFilterDraft>) {
     setSelectedCustomViewId(null);
+    setActiveSavedFilterId(null);
     setManualDrafts((prev) => {
       const next = new Map(prev);
       const current = next.get(apiName) ?? emptyManualDraft(field);
@@ -667,43 +708,45 @@ export default function SideBar({
     const id = field.customViewId ?? null;
     setFieldSelections(new Map());
     setManualDrafts(new Map());
+    setActiveSavedFilterId(null);
     setSelectedCustomViewId((prev) => (prev === id ? null : id));
   }
 
-  function clearFilters() {
-    if (applyLoading) return;
-    setFieldSelections(new Map());
-    setManualDrafts(new Map());
-    setSelectedCustomViewId(null);
-    applyClosePending.current = false;
-    onApplyFilters({ criteria: null, customViewId: null, fieldSelections: [] });
-  }
+  function buildApplyPayloadFromState(
+    nextCheckboxes: Map<string, Set<string>>,
+    nextDrafts: Map<string, ManualFilterDraft>,
+    nextCustomViewId: string | null,
+    zohoSelections?: ContractFieldFilterSelection[],
+  ): ContractFilterApplyPayload {
+    const hasBoxes = [...nextCheckboxes.values()].some((s) => s.size > 0);
+    const hasManual = [...nextDrafts.entries()].some(([apiName, draft]) => {
+      const field = fieldMeta.find((f) => f.apiName === apiName);
+      if (field?.dataType === "custom_view") return false;
+      if (draft.operator === "between") {
+        return Boolean(draft.value.trim() && draft.value2.trim());
+      }
+      return draft.value.trim().length > 0;
+    });
 
-  function applyFilters() {
-    if (applyLoading) return;
-
-    if (selectedCustomViewId && !hasCheckboxFilters && !hasManualFilters) {
-      applyClosePending.current = true;
-      onApplyFilters({
+    if (nextCustomViewId && !hasBoxes && !hasManual) {
+      return {
         criteria: null,
-        customViewId: selectedCustomViewId,
+        customViewId: nextCustomViewId,
         fieldSelections: [],
-      });
-      return;
+      };
     }
 
     const selections: ContractFieldFilterSelection[] = [
-      ...selectionsFromCheckboxState(fieldSelections),
+      ...selectionsFromCheckboxState(nextCheckboxes),
     ];
-    /** Display values for offline/client-side filtering (names, not ids). */
     const displaySelections: ContractFieldFilterSelection[] = [
-      ...selectionsFromCheckboxState(fieldSelections),
+      ...selectionsFromCheckboxState(nextCheckboxes),
     ];
 
     for (const field of fieldMeta) {
       if (field.dataType === "custom_view") continue;
       if (field.hasOptions && field.options.length > 0) continue;
-      const draft = manualDrafts.get(field.apiName);
+      const draft = nextDrafts.get(field.apiName);
       if (!draft?.value.trim()) continue;
 
       const criteriaValue = draft.value.trim();
@@ -722,9 +765,16 @@ export default function SideBar({
           values: [displayValue, draft.value2.trim()],
         });
       } else {
+        // Lookup "contains" with a picked suggestion id → exact match on that record.
+        const operator =
+          draft.operator === "contains" &&
+          fieldUsesIdSuggestions(field) &&
+          looksLikeZohoId(criteriaValue) ?
+            "equals"
+          : draft.operator;
         selections.push({
           apiName: criteriaApiNameForFilterField(field.apiName, field.dataType, zohoModule),
-          operator: draft.operator,
+          operator,
           values: [criteriaValue],
         });
         displaySelections.push({
@@ -735,14 +785,265 @@ export default function SideBar({
       }
     }
 
-    const criteria = buildCriteriaFromFieldFilters(selections);
-    applyClosePending.current = true;
-    onApplyFilters({
-      criteria,
+    return {
+      criteria: buildSearchParamFromFieldFilters(zohoSelections ?? selections),
       customViewId: null,
       fieldSelections: displaySelections,
-    });
+    };
   }
+
+  /**
+   * Zoho lookup filters cannot use text `contains`. Resolve partial names to matching
+   * record/user ids, then filter with `in` / `equals`.
+   */
+  async function resolveLookupContainsSelections(
+    selections: ContractFieldFilterSelection[],
+  ): Promise<ContractFieldFilterSelection[]> {
+    const resolved: ContractFieldFilterSelection[] = [];
+
+    for (const selection of selections) {
+      if (selection.operator !== "contains") {
+        resolved.push(selection);
+        continue;
+      }
+
+      const field = fieldMeta.find(
+        (f) =>
+          f.apiName === selection.apiName ||
+          criteriaApiNameForFilterField(f.apiName, f.dataType, zohoModule) === selection.apiName,
+      );
+
+      if (!field || !fieldUsesIdSuggestions(field)) {
+        resolved.push(selection);
+        continue;
+      }
+
+      const raw = selection.values[0]?.trim() ?? "";
+      if (!raw) continue;
+
+      if (looksLikeZohoId(raw)) {
+        resolved.push({ ...selection, operator: "equals", values: [raw] });
+        continue;
+      }
+
+      const params = new URLSearchParams({
+        module: zohoModule,
+        field: field.apiName,
+        q: raw,
+        dataType: field.dataType,
+      });
+      if (field.lookupModule) params.set("lookupModule", field.lookupModule);
+
+      try {
+        const res = await fetch(`/api/field-suggestions?${params.toString()}`);
+        const data = (await res.json()) as { suggestions?: ContractFilterOption[] };
+        const q = raw.toLowerCase();
+        const ids = [
+          ...new Set(
+            (Array.isArray(data.suggestions) ? data.suggestions : [])
+              .filter((opt) => String(opt.label ?? "").toLowerCase().includes(q))
+              .map((opt) => String(opt.value ?? "").trim())
+              .filter(Boolean),
+          ),
+        ];
+
+        if (ids.length === 0) {
+          resolved.push({
+            apiName: selection.apiName,
+            operator: "equals",
+            values: ["0000000000000000000"],
+          });
+        } else if (ids.length === 1) {
+          resolved.push({ apiName: selection.apiName, operator: "equals", values: ids });
+        } else {
+          resolved.push({ apiName: selection.apiName, operator: "in", values: ids });
+        }
+      } catch {
+        resolved.push(selection);
+      }
+    }
+
+    return resolved;
+  }
+
+  function clearFilters() {
+    if (applyLoading) return;
+    setFieldSelections(new Map());
+    setManualDrafts(new Map());
+    setSelectedCustomViewId(null);
+    setActiveSavedFilterId(null);
+    setSaveOpen(false);
+    setSaveName("");
+    applyClosePending.current = false;
+    onApplyFilters({ criteria: null, customViewId: null, fieldSelections: [] });
+  }
+
+  async function buildZohoSelectionsFromState(
+    nextCheckboxes: Map<string, Set<string>>,
+    nextDrafts: Map<string, ManualFilterDraft>,
+  ): Promise<ContractFieldFilterSelection[]> {
+    const baseSelections: ContractFieldFilterSelection[] = [
+      ...selectionsFromCheckboxState(nextCheckboxes),
+    ];
+    for (const field of fieldMeta) {
+      if (field.dataType === "custom_view") continue;
+      if (field.hasOptions && field.options.length > 0) continue;
+      const draft = nextDrafts.get(field.apiName);
+      if (!draft?.value.trim()) continue;
+      if (draft.operator === "between") {
+        if (!draft.value2.trim()) continue;
+        baseSelections.push({
+          apiName: criteriaApiNameForFilterField(field.apiName, field.dataType, zohoModule),
+          operator: "between",
+          values: [draft.value.trim(), draft.value2.trim()],
+        });
+      } else {
+        const criteriaValue = draft.value.trim();
+        const operator =
+          draft.operator === "contains" &&
+          fieldUsesIdSuggestions(field) &&
+          looksLikeZohoId(criteriaValue) ?
+            "equals"
+          : draft.operator;
+        baseSelections.push({
+          apiName: criteriaApiNameForFilterField(field.apiName, field.dataType, zohoModule),
+          operator,
+          values: [criteriaValue],
+        });
+      }
+    }
+
+    const needsLookupContainsResolve = baseSelections.some((s) => {
+      if (s.operator !== "contains") return false;
+      const field = fieldMeta.find(
+        (f) =>
+          f.apiName === s.apiName ||
+          criteriaApiNameForFilterField(f.apiName, f.dataType, zohoModule) === s.apiName,
+      );
+      return Boolean(field && fieldUsesIdSuggestions(field) && !looksLikeZohoId(s.values[0] ?? ""));
+    });
+
+    return needsLookupContainsResolve ?
+        resolveLookupContainsSelections(baseSelections)
+      : baseSelections;
+  }
+
+  async function applyFilters() {
+    if (applyLoading) return;
+
+    const zohoSelections = await buildZohoSelectionsFromState(fieldSelections, manualDrafts);
+
+    applyClosePending.current = true;
+    onApplyFilters(
+      buildApplyPayloadFromState(
+        fieldSelections,
+        manualDrafts,
+        selectedCustomViewId,
+        zohoSelections,
+      ),
+    );
+  }
+
+  function snapshotCurrentFilters(): SavedFilterPreset | null {
+    const checkboxSelections = selectionsFromCheckboxState(fieldSelections);
+    const manualFilters = [...manualDrafts.entries()]
+      .map(([apiName, draft]) => {
+        const field = fieldMeta.find((f) => f.apiName === apiName);
+        if (field?.dataType === "custom_view") return null;
+        if (field?.hasOptions && (field.options?.length ?? 0) > 0) return null;
+        if (!draft.value.trim()) return null;
+        if (draft.operator === "between" && !draft.value2.trim()) return null;
+        return {
+          apiName,
+          operator: draft.operator,
+          value: draft.value.trim(),
+          value2: draft.value2.trim() || undefined,
+          displayLabel: draft.displayLabel?.trim() || undefined,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row != null);
+
+    if (!selectedCustomViewId && checkboxSelections.length === 0 && manualFilters.length === 0) {
+      return null;
+    }
+
+    const name = saveName.trim() || "Untitled filter";
+    return {
+      id: createSavedFilterId(),
+      name,
+      createdAt: Date.now(),
+      customViewId: selectedCustomViewId,
+      checkboxSelections,
+      manualFilters,
+    };
+  }
+
+  function saveCurrentFilters() {
+    const preset = snapshotCurrentFilters();
+    if (!preset) return;
+    const next = [preset, ...savedFilters.filter((p) => p.name !== preset.name)];
+    setSavedFilters(next);
+    persistSavedFilters(zohoModule, next);
+    setActiveSavedFilterId(preset.id);
+    setSaveOpen(false);
+    setSaveName("");
+  }
+
+  function deleteSavedFilter(id: string) {
+    const next = savedFilters.filter((p) => p.id !== id);
+    setSavedFilters(next);
+    persistSavedFilters(zohoModule, next);
+    if (activeSavedFilterId === id) setActiveSavedFilterId(null);
+  }
+
+  async function applySavedFilter(preset: SavedFilterPreset) {
+    if (applyLoading) return;
+
+    const nextCheckboxes = new Map<string, Set<string>>();
+    for (const selection of preset.checkboxSelections) {
+      if (!selection.apiName || selection.values.length === 0) continue;
+      nextCheckboxes.set(selection.apiName, new Set(selection.values));
+    }
+
+    const nextDrafts = new Map<string, ManualFilterDraft>();
+    for (const manual of preset.manualFilters) {
+      const field = fieldMeta.find((f) => f.apiName === manual.apiName);
+      nextDrafts.set(manual.apiName, {
+        operator: manual.operator || (field ? defaultOperator(field) : "contains"),
+        value: manual.value,
+        value2: manual.value2 ?? "",
+        displayLabel: manual.displayLabel,
+      });
+    }
+
+    setFieldSelections(nextCheckboxes);
+    setManualDrafts(nextDrafts);
+    setSelectedCustomViewId(preset.customViewId);
+    setActiveSavedFilterId(preset.id);
+
+    const zohoSelections = await buildZohoSelectionsFromState(nextCheckboxes, nextDrafts);
+    applyClosePending.current = true;
+    onApplyFilters(
+      buildApplyPayloadFromState(
+        nextCheckboxes,
+        nextDrafts,
+        preset.customViewId,
+        zohoSelections,
+      ),
+    );
+  }
+
+  const hasFieldValueFilters = hasCheckboxFilters || hasManualFilters;
+  const canApplyFilters = hasFieldValueFilters || Boolean(selectedCustomViewId);
+  /** Save only when at least one field has a concrete value (not system views alone). */
+  const canSaveCurrent = hasFieldValueFilters;
+
+  useEffect(() => {
+    if (saveOpen && !canSaveCurrent) {
+      setSaveOpen(false);
+      setSaveName("");
+    }
+  }, [saveOpen, canSaveCurrent]);
 
   return (
     <>
@@ -787,7 +1088,7 @@ export default function SideBar({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-2 text-crm-text-muted transition hover:bg-zinc-100 hover:text-crm-text dark:hover:bg-zinc-800 md:hidden"
+              className="cursor-pointer rounded-lg p-2 text-crm-text-muted transition hover:bg-zinc-100 hover:text-crm-text dark:hover:bg-zinc-800 md:hidden"
               aria-label="Close filters"
             >
               <X className="h-5 w-5" />
@@ -819,6 +1120,55 @@ export default function SideBar({
             "[&::-webkit-scrollbar-thumb:hover]:bg-zinc-500",
           ].join(" ")}
         >
+          {savedFilters.length > 0 ?
+            <div className="border-b border-crm-border/80 px-2 py-2">
+              <p className="column-heading px-2 pb-1.5 text-xs text-crm-text-muted">Saved filters</p>
+              <div className="space-y-1">
+                {savedFilters.map((preset) => {
+                  const clauseCount =
+                    preset.checkboxSelections.length +
+                    preset.manualFilters.length +
+                    (preset.customViewId ? 1 : 0);
+                  const active = activeSavedFilterId === preset.id;
+                  return (
+                    <div
+                      key={preset.id}
+                      className={cn(
+                        "group flex items-center gap-1 rounded-lg px-1 py-0.5",
+                        active ? "bg-blue-500/10" : "hover:bg-zinc-100 dark:hover:bg-zinc-800/70",
+                      )}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => applySavedFilter(preset)}
+                        disabled={applyLoading || metaLoading || Boolean(metaError)}
+                        className={cn(
+                          "min-w-0 flex-1 cursor-pointer rounded-md px-2 py-1.5 text-left text-sm transition disabled:cursor-not-allowed disabled:opacity-60",
+                          active ? "font-medium text-blue-400" : "text-crm-text",
+                        )}
+                        title={`Apply “${preset.name}” (${clauseCount} condition${clauseCount === 1 ? "" : "s"})`}
+                      >
+                        <span className="block truncate">{preset.name}</span>
+                        <span className="block text-[11px] text-crm-text-muted">
+                          {clauseCount} condition{clauseCount === 1 ? "" : "s"}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteSavedFilter(preset.id)}
+                        className="cursor-pointer rounded-md p-1.5 text-crm-text-muted opacity-70 transition hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                        aria-label={`Delete saved filter ${preset.name}`}
+                        title="Delete saved filter"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          : null}
+
           <div className="px-1 py-2">
             {metaLoading ?
               <FilterSidebarFieldsSkeleton rows={14} />
@@ -847,15 +1197,61 @@ export default function SideBar({
           </div>
         </div>
 
-        {(hasPendingFilters || hasActiveFilter) && (
+        {(canApplyFilters || hasActiveFilter || saveOpen) && (
           <div className="shrink-0 space-y-2 border-t border-crm-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            {hasPendingFilters ?
+            {saveOpen ?
+              <div className="space-y-2 rounded-lg border border-crm-border bg-crm-panel p-2">
+                <label className="block">
+                  <span className="mb-1 block text-xs text-crm-text-muted">Filter name</span>
+                  <input
+                    type="text"
+                    value={saveName}
+                    onChange={(e) => setSaveName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        saveCurrentFilters();
+                      }
+                      if (e.key === "Escape") {
+                        setSaveOpen(false);
+                        setSaveName("");
+                      }
+                    }}
+                    placeholder="e.g. Active Carvana sites"
+                    autoFocus
+                    className="h-9 w-full rounded-lg border border-crm-border bg-crm-panel-muted px-3 text-sm text-crm-text outline-none focus:border-blue-500"
+                  />
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={saveCurrentFilters}
+                    disabled={!canSaveCurrent}
+                    className="h-8 flex-1 cursor-pointer rounded-lg bg-gradient-to-b from-blue-500 to-blue-700 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSaveOpen(false);
+                      setSaveName("");
+                    }}
+                    className="h-8 cursor-pointer rounded-lg border border-crm-border bg-crm-panel-muted px-3 text-sm text-crm-text transition hover:bg-crm-panel"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            : null}
+
+            {canApplyFilters ?
               <button
                 type="button"
                 onClick={applyFilters}
                 disabled={applyLoading}
                 aria-busy={applyLoading}
-                className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-blue-500 to-blue-700 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-blue-500 to-blue-700 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {applyLoading ?
                   <>
@@ -865,14 +1261,29 @@ export default function SideBar({
                 : "Apply Filter"}
               </button>
             : null}
-            <button
-              type="button"
-              onClick={clearFilters}
-              disabled={applyLoading}
-              className="h-8 w-full rounded-lg border border-crm-border bg-crm-panel-muted text-sm text-crm-text transition hover:bg-crm-panel disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Clear
-            </button>
+
+            {canSaveCurrent && !saveOpen ?
+              <button
+                type="button"
+                onClick={() => setSaveOpen(true)}
+                disabled={applyLoading}
+                className="flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-crm-border bg-crm-panel text-sm text-crm-text transition hover:bg-crm-panel-muted disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Bookmark className="h-3.5 w-3.5" aria-hidden />
+                Save filter
+              </button>
+            : null}
+
+            {(canApplyFilters || hasActiveFilter) ?
+              <button
+                type="button"
+                onClick={clearFilters}
+                disabled={applyLoading}
+                className="h-8 w-full cursor-pointer rounded-lg border border-crm-border bg-crm-panel-muted text-sm text-crm-text transition hover:bg-crm-panel disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Clear
+              </button>
+            : null}
           </div>
         )}
       </aside>

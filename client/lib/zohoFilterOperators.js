@@ -18,22 +18,32 @@ const OPERATORS_BY_DATA_TYPE = {
     { id: "in", label: "is any of" },
   ],
   text: [
+    { id: "contains", label: "contains" },
     { id: "equals", label: "is" },
     { id: "not_equal", label: "is not" },
     { id: "starts_with", label: "starts with" },
     { id: "in", label: "is any of" },
   ],
   email: [
+    { id: "contains", label: "contains" },
     { id: "equals", label: "is" },
     { id: "not_equal", label: "is not" },
     { id: "starts_with", label: "starts with" },
   ],
   phone: [
+    { id: "contains", label: "contains" },
     { id: "equals", label: "is" },
     { id: "not_equal", label: "is not" },
     { id: "starts_with", label: "starts with" },
   ],
   website: [
+    { id: "contains", label: "contains" },
+    { id: "equals", label: "is" },
+    { id: "not_equal", label: "is not" },
+    { id: "starts_with", label: "starts with" },
+  ],
+  textarea: [
+    { id: "contains", label: "contains" },
     { id: "equals", label: "is" },
     { id: "not_equal", label: "is not" },
     { id: "starts_with", label: "starts with" },
@@ -103,29 +113,35 @@ const OPERATORS_BY_DATA_TYPE = {
   ],
   ownerlookup: [
     { id: "equals", label: "is" },
+    { id: "contains", label: "contains" },
     { id: "not_equal", label: "is not" },
     { id: "in", label: "is any of" },
   ],
   userlookup: [
     { id: "equals", label: "is" },
+    { id: "contains", label: "contains" },
     { id: "not_equal", label: "is not" },
     { id: "in", label: "is any of" },
   ],
   multiuserlookup: [
     { id: "equals", label: "is" },
+    { id: "contains", label: "contains" },
     { id: "not_equal", label: "is not" },
     { id: "in", label: "is any of" },
   ],
   lookup: [
     { id: "equals", label: "is" },
+    { id: "contains", label: "contains" },
     { id: "not_equal", label: "is not" },
     { id: "in", label: "is any of" },
   ],
 };
 
 const DEFAULT_OPERATORS = [
+  { id: "contains", label: "contains" },
   { id: "equals", label: "is" },
   { id: "not_equal", label: "is not" },
+  { id: "starts_with", label: "starts with" },
 ];
 
 /** @param {string} dataType */
