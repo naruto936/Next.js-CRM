@@ -315,6 +315,144 @@ body.crm-col-resizing {
   @apply text-xs font-semibold uppercase tracking-wide text-crm-text;
 }
 
+/* Zoho rich-text fields (Client/Vendor Addendum, etc.) — document-style, not a card */
+.crm-rich-text {
+  max-width: 42rem;
+  margin-top: 0.25rem;
+  padding: 0.15rem 0 0.15rem 0.9rem;
+  border-left: 3px solid color-mix(in srgb, #3b82f6 55%, var(--crm-border));
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+  color: var(--crm-text);
+  overflow-wrap: anywhere;
+}
+
+.crm-rich-text,
+.crm-rich-text * {
+  color: inherit !important;
+  background: transparent !important;
+}
+
+.crm-rich-text p {
+  margin: 0;
+  min-height: 0;
+}
+
+.crm-rich-text p + p {
+  margin-top: 0.35rem;
+}
+
+/* Collapse Zoho empty spacer paragraphs */
+.crm-rich-text p:has(> br:only-child),
+.crm-rich-text p:has(> span > br:only-child),
+.crm-rich-text p:empty {
+  display: none;
+}
+
+.crm-rich-text p:has(> br:only-child) + p,
+.crm-rich-text p:has(> span > br:only-child) + p {
+  margin-top: 0.75rem;
+}
+
+.crm-rich-text b,
+.crm-rich-text strong {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Title lines from Zoho often use <b><i>…</i></b> */
+.crm-rich-text b i,
+.crm-rich-text strong em,
+.crm-rich-text b em,
+.crm-rich-text strong i {
+  display: inline;
+  font-size: 1.02em;
+  font-style: italic;
+  font-weight: 650;
+  color: var(--crm-text);
+}
+
+.crm-rich-text i,
+.crm-rich-text em {
+  font-style: italic;
+  color: color-mix(in srgb, var(--crm-text) 88%, var(--crm-text-muted));
+}
+
+.crm-rich-text u {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--crm-text-muted) 55%, transparent);
+}
+
+.crm-rich-text b u,
+.crm-rich-text strong u,
+.crm-rich-text u b,
+.crm-rich-text u strong {
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: color-mix(in srgb, #3b82f6 40%, var(--crm-text-muted));
+}
+
+.crm-rich-text ul,
+.crm-rich-text ol {
+  margin: 0.5rem 0 0.65rem;
+  padding-left: 1.15rem;
+}
+
+.crm-rich-text li {
+  margin: 0.25rem 0;
+  padding-left: 0.15rem;
+}
+
+.crm-rich-text li::marker {
+  color: color-mix(in srgb, #3b82f6 70%, var(--crm-text-muted));
+}
+
+.crm-plain-notes {
+  max-width: 42rem;
+  margin-top: 0.25rem;
+  padding: 0.15rem 0 0.15rem 0.9rem;
+  border-left: 3px solid color-mix(in srgb, #3b82f6 55%, var(--crm-border));
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+  color: var(--crm-text);
+}
+
+/* Compact rich text for contracts list table / cards */
+.crm-rich-text--list {
+  max-width: none;
+  max-height: 4.75rem;
+  margin-top: 0;
+  padding: 0.1rem 0 0.1rem 0.65rem;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.crm-rich-text--list p + p {
+  margin-top: 0.2rem;
+}
+
+.crm-plain-notes--list {
+  max-width: none;
+  max-height: 4.75rem;
+  margin-top: 0;
+  padding: 0.1rem 0 0.1rem 0.65rem;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
 .crm-toolbar-btn {
   @apply shrink-0 cursor-pointer border-crm-border bg-crm-panel text-crm-text hover:bg-crm-panel-muted;
 }

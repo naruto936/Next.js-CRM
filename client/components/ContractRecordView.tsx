@@ -30,6 +30,11 @@ import {
   getContractLookupHref,
   isContractLookupField,
 } from "@/lib/contractRecordLookups";
+import {
+  isRichTextField,
+  sanitizeCrmRichHtml,
+  shouldRenderAsRichHtml,
+} from "@/lib/richTextDisplay";
 
 type ContractStatus = "Active" | "Closed";
 
@@ -111,6 +116,23 @@ function FieldValue({
       >
         {href}
       </a>
+    );
+  }
+
+  if (shouldRenderAsRichHtml(apiName, display, dataType)) {
+    return (
+      <div
+        className="crm-rich-text"
+        dangerouslySetInnerHTML={{ __html: sanitizeCrmRichHtml(display) }}
+      />
+    );
+  }
+
+  if (isRichTextField(apiName, dataType) || display.includes("\n")) {
+    return (
+      <div className="crm-plain-notes whitespace-pre-wrap break-words text-crm-text">
+        {display}
+      </div>
     );
   }
 

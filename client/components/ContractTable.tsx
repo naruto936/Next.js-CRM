@@ -40,6 +40,12 @@ import {
   getContractLookupHref,
   isContractLookupField,
 } from "@/lib/contractRecordLookups";
+import {
+  htmlToPlainText,
+  isRichTextField,
+  sanitizeCrmRichHtml,
+  shouldRenderAsRichHtml,
+} from "@/lib/richTextDisplay";
 
 function openContractRecord(recordId: string) {
   window.open(`/contracts/${recordId}`, "_blank", "noopener,noreferrer");
@@ -65,13 +71,16 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function isLongTextColumn(apiName: string) {
-  return (
+function isLongTextColumn(apiName: string, dataType?: string) {
+  if (
     apiName === "Vendor" ||
     apiName === "Company_Name" ||
     apiName === "Name" ||
     apiName === "Site"
-  );
+  ) {
+    return true;
+  }
+  return isRichTextField(apiName, dataType);
 }
 
 function TruncateWrap({
@@ -136,11 +145,13 @@ function CellContent({
   apiName,
   label,
   value,
+  dataType,
   lookupId,
 }: {
   apiName: string;
   label?: string;
   value: string;
+  dataType?: string;
   lookupId?: string;
 }) {
   if (isStatusField(apiName)) {
@@ -151,7 +162,36 @@ function CellContent({
       <LookupFieldCell apiName={apiName} value={value} lookupId={lookupId} />
     );
   }
-  if (apiName === "Vendor" || apiName === "Company_Name" || apiName === "Name" || isLongTextColumn(apiName)) {
+
+  if (shouldRenderAsRichHtml(apiName, value, dataType)) {
+    const plain = htmlToPlainText(value);
+    return (
+      <div
+        className="crm-rich-text crm-rich-text--list"
+        title={plain || undefined}
+        dangerouslySetInnerHTML={{ __html: sanitizeCrmRichHtml(value) }}
+        onClick={(e) => e.stopPropagation()}
+      />
+    );
+  }
+
+  if (isRichTextField(apiName, dataType) || value.includes("\n")) {
+    return (
+      <div
+        className="crm-plain-notes crm-plain-notes--list whitespace-pre-wrap break-words text-crm-text"
+        title={value || undefined}
+      >
+        {value || "—"}
+      </div>
+    );
+  }
+
+  if (
+    apiName === "Vendor" ||
+    apiName === "Company_Name" ||
+    apiName === "Name" ||
+    isLongTextColumn(apiName, dataType)
+  ) {
     const display = value || "—";
     return (
       <TruncateWrap title={value || undefined}>
@@ -166,7 +206,8 @@ function CellContent({
 
 function getColumnWidthPx(col: { apiName: string; dataType?: string }) {
   if (isStatusField(col.apiName)) return 128;
-  if (isLongTextColumn(col.apiName)) return 220;
+  if (isRichTextField(col.apiName, col.dataType)) return 280;
+  if (isLongTextColumn(col.apiName, col.dataType)) return 220;
   if (isDateLikeField(col.apiName, col.dataType)) return 132;
   return 168;
 }
@@ -244,6 +285,7 @@ function ContractCard({
                   apiName={col.apiName}
                   label={col.label}
                   value={value}
+                  dataType={col.dataType}
                   lookupId={getContractFieldLookupId(row.lookups, col.apiName)}
                 />
               </dd>
@@ -646,6 +688,7 @@ export default function ContractsTable({
                                       apiName={col.apiName}
                                       label={col.label}
                                       value={value}
+                                      dataType={col.dataType}
                                       lookupId={lookupId}
                                     />
                                   </TableCell>

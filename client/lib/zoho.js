@@ -4,7 +4,7 @@ import {
   isZohoTokenExpiredResponse,
 } from "@/lib/zoho-oauth";
 
-export const ZOHO_CRM_BASE = "https://www.zohoapis.com/crm/v3";
+export const ZOHO_CRM_BASE = "https://www.zohoapis.com/crm/v7";
 export const ZOHO_CRM_V8_BASE = "https://www.zohoapis.com/crm/v8";
 export const ZOHO_CRM_MODULE_CONTRACTS = "Contracts";
 

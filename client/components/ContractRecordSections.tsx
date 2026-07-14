@@ -14,6 +14,7 @@ import {
 import { isScopeOfWorkSubformSection } from "@/lib/contractScopeOfWork";
 import type { ContractScopeOfWorkRow } from "@/lib/contractScopeOfWork";
 import { ContractScopeOfWorkTable } from "@/components/ContractScopeOfWorkTable";
+import { shouldUseWideFieldLayout } from "@/lib/richTextDisplay";
 
 type FieldValueRendererProps = {
   apiName: string;
@@ -96,19 +97,28 @@ function RecordFieldGrid({
 }) {
   return (
     <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-      {rows.map((row) => (
-        <div key={row.apiName} className="min-w-0 border-b border-crm-border pb-4">
-          <dt className="record-field-label">{row.label}</dt>
-          <dd className="mt-1.5 min-w-0 text-sm">
-            {renderFieldValue({
-              apiName: row.apiName,
-              value: row.value,
-              dataType: row.dataType,
-              label: row.label,
-            })}
-          </dd>
-        </div>
-      ))}
+      {rows.map((row) => {
+        const wide = shouldUseWideFieldLayout(row.apiName, row.value, row.dataType);
+        return (
+          <div
+            key={row.apiName}
+            className={cn(
+              "min-w-0 border-b border-crm-border pb-4",
+              wide && "sm:col-span-2 lg:col-span-3",
+            )}
+          >
+            <dt className="record-field-label">{row.label}</dt>
+            <dd className="mt-1.5 min-w-0 text-sm">
+              {renderFieldValue({
+                apiName: row.apiName,
+                value: row.value,
+                dataType: row.dataType,
+                label: row.label,
+              })}
+            </dd>
+          </div>
+        );
+      })}
     </dl>
   );
 }
