@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { ContractScopeOfWorkRow } from "@/lib/contractScopeOfWork";
+import type { ContractScopeOfWorkRow } from "@/lib/contracts/recordLayout";
 
 export function ContractScopeOfWorkTable({ rows }: { rows: ContractScopeOfWorkRow[] }) {
   if (rows.length === 0) {

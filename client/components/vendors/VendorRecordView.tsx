@@ -2,20 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Building2 } from "lucide-react";
-import { ContractRecordSections } from "@/components/ContractRecordSections";
+import { ContractRecordSections } from "@/components/contracts/ContractRecordSections";
 import {
   ContractRecordHeaderSkeleton,
   ContractRecordLoader,
-} from "@/components/ContractRecordLoader";
+} from "@/components/contracts/ContractRecordLoader";
 import { cn } from "@/lib/utils";
 import {
   formatCellForDisplay,
   isDateLikeField,
   isUrlLikeField,
   looksLikeHttpUrl,
-} from "@/lib/contractColumns";
-import type { CrmRecordSection, RecordFieldRow } from "@/lib/contractRecordLayout";
-import { VENDOR_DETAIL_SECTIONS, labelForVendorField } from "@/lib/vendorConfig";
+} from "@/lib/contracts/columns";
+import type { CrmRecordSection, RecordFieldRow } from "@/lib/contracts/recordLayout";
+import { VENDOR_DETAIL_SECTIONS, labelForVendorField } from "@/lib/vendor";
 
 type VendorRecord = {
   id: string;

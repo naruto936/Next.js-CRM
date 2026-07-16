@@ -1,4 +1,4 @@
-import SowRecordView from "@/components/SowRecordView";
+import SowRecordView from "@/components/sow/SowRecordView";
 
 type PageProps = {
   params: Promise<{ id: string }>;

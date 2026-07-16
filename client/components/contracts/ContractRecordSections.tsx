@@ -3,18 +3,18 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isContractBooleanTrue, normalizeContractFieldApiName } from "@/lib/contractColumns";
+import { isContractBooleanTrue, normalizeContractFieldApiName } from "@/lib/contracts/columns";
 import {
   filterScheduledSectionRows,
+  isScopeOfWorkSubformSection,
   SCHEDULED_SECTION_ID,
   SCHEDULED_SERVICE_TOGGLE_API_NAME,
+  shouldUseWideFieldLayout,
+  type ContractScopeOfWorkRow,
   type CrmRecordSection,
   type RecordFieldRow,
-} from "@/lib/contractRecordLayout";
-import { isScopeOfWorkSubformSection } from "@/lib/contractScopeOfWork";
-import type { ContractScopeOfWorkRow } from "@/lib/contractScopeOfWork";
-import { ContractScopeOfWorkTable } from "@/components/ContractScopeOfWorkTable";
-import { shouldUseWideFieldLayout } from "@/lib/richTextDisplay";
+} from "@/lib/contracts/recordLayout";
+import { ContractScopeOfWorkTable } from "@/components/contracts/ContractScopeOfWorkTable";
 
 type FieldValueRendererProps = {
   apiName: string;

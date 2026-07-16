@@ -13,8 +13,8 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ContractFilterFieldMeta } from "@/lib/contractFilterTypes";
-import { getOperatorsForDataType } from "@/lib/zohoFilterOperators";
+import type { ContractFilterFieldMeta } from "@/lib/contracts/filterTypes";
+import { getOperatorsForDataType } from "@/lib/contracts/filterMeta";
 
 type CustomViewsDropdownProps = {
   zohoModule?: string;

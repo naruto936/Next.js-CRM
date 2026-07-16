@@ -1,4 +1,4 @@
-import ModuleHomeGrid from "@/components/ModuleHomeGrid";
+import ModuleHomeGrid from "@/components/home/ModuleHomeGrid";
 
 export default function Home() {
   return (

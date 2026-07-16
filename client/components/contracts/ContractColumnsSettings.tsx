@@ -12,14 +12,14 @@ import {
 } from "react";
 import { Search, Settings2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ColumnSettingsFieldsSkeleton, ShimmerBar } from "@/components/LoadingShimmer";
+import { ColumnSettingsFieldsSkeleton, ShimmerBar } from "@/components/shared/LoadingShimmer";
 import { cn } from "@/lib/utils";
 import {
   filterCatalogForRecordView,
   normalizeContractFieldApiName,
   normalizeVisibleApiNames,
   type CrmFieldMeta,
-} from "@/lib/contractColumns";
+} from "@/lib/contracts/columns";
 
 type FieldOption = CrmFieldMeta & { visible?: boolean };
 

@@ -2,17 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FileText } from "lucide-react";
-import { ContractRecordSections } from "@/components/ContractRecordSections";
+import { ContractRecordSections } from "@/components/contracts/ContractRecordSections";
 import {
   ContractRecordHeaderSkeleton,
   ContractRecordLoader,
-} from "@/components/ContractRecordLoader";
+} from "@/components/contracts/ContractRecordLoader";
 import { cn } from "@/lib/utils";
 import {
   buildFallbackRecordSections,
+  getContractFieldLookupId,
+  getContractLookupHref,
+  isContractLookupField,
+  isRichTextField,
   mergeSectionsWithCatalog,
+  sanitizeCrmRichHtml,
+  shouldRenderAsRichHtml,
+  type ContractScopeOfWorkRow,
   type CrmRecordSection,
-} from "@/lib/contractRecordLayout";
+} from "@/lib/contracts/recordLayout";
 import {
   type ContractRecord,
   type CrmFieldMeta,
@@ -23,18 +30,7 @@ import {
   isContractBooleanTrue,
   isUrlLikeField,
   looksLikeHttpUrl,
-} from "@/lib/contractColumns";
-import type { ContractScopeOfWorkRow } from "@/lib/contractScopeOfWork";
-import {
-  getContractFieldLookupId,
-  getContractLookupHref,
-  isContractLookupField,
-} from "@/lib/contractRecordLookups";
-import {
-  isRichTextField,
-  sanitizeCrmRichHtml,
-  shouldRenderAsRichHtml,
-} from "@/lib/richTextDisplay";
+} from "@/lib/contracts/columns";
 
 type ContractStatus = "Active" | "Closed";
 

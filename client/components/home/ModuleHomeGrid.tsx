@@ -1,21 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
-  Building2,
-  ClipboardCheck,
   Database,
-  FileSignature,
   FileText,
-  Gavel,
-  Receipt,
-  Search,
   type LucideIcon,
 } from "lucide-react";
-import { ShimmerBar } from "@/components/LoadingShimmer";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ShimmerBar } from "@/components/shared/LoadingShimmer";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 type ModuleCard = {
@@ -39,46 +33,6 @@ const MODULES: ModuleCard[] = [
     icon: FileText,
     useLiveRecordCount: true,
     liveCountPath: "/api/contracts?page=1",
-  },
-  {
-    title: "Service completions",
-    description: "Track and manage service work.",
-    href: "/service-completions",
-    icon: ClipboardCheck,
-    useLiveRecordCount: true,
-    liveCountPath: "/api/service-completions?page=1",
-  },
-  {
-    title: "SOW",
-    description: "Statements of work and scopes.",
-    href: "/sow",
-    icon: FileSignature,
-    useLiveRecordCount: true,
-    liveCountPath: "/api/sow?page=1",
-  },
-  {
-    title: "Bids",
-    description: "Review and manage bids.",
-    href: "/bids",
-    icon: Gavel,
-    useLiveRecordCount: true,
-    liveCountPath: "/api/bids?page=1",
-  },
-  {
-    title: "Vendor Invoice",
-    description: "Vendor billing and invoices.",
-    href: "/vendor-invoice",
-    icon: Receipt,
-    useLiveRecordCount: true,
-    liveCountPath: "/api/vendor-invoice?page=1",
-  },
-  {
-    title: "Vendor",
-    description: "Vendor directory and profiles.",
-    href: "/vendors",
-    icon: Building2,
-    useLiveRecordCount: true,
-    liveCountPath: "/api/vendors?page=1",
   },
 ];
 
@@ -167,10 +121,8 @@ function ModuleCard({
 
 export default function ModuleHomeGrid() {
   const [ready, setReady] = useState(false);
-  const [query, setQuery] = useState("");
   const [liveCounts, setLiveCounts] = useState<Record<string, number | null>>({});
   const [liveCountsLoading, setLiveCountsLoading] = useState(true);
-  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const id = window.setTimeout(() => setReady(true), 420);
@@ -219,65 +171,19 @@ export default function ModuleHomeGrid() {
     };
   }, []);
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-
-  const filteredModules = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return MODULES;
-    return MODULES.filter(
-      (m) =>
-        m.title.toLowerCase().includes(q) || m.description.toLowerCase().includes(q),
-    );
-  }, [query]);
-
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col px-4 pb-10 pt-6 sm:px-6 sm:pb-14 sm:pt-8">
-      <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+      <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight text-crm-text sm:text-[1.65rem]">
             CRM Workspace
           </h1>
           <p className="mt-1 text-sm text-crm-text-muted sm:text-[0.95rem]">
-            Choose a module to open and manage your business data.
+            Open Contracts to browse and manage your records.
           </p>
         </div>
         <ThemeToggle showLabel className="shrink-0 self-start sm:mt-0.5" />
       </header>
-
-      <div className="relative mb-8 sm:mb-10">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-4 size-[1.15rem] -translate-y-1/2 text-zinc-400"
-          aria-hidden
-        />
-        <input
-          ref={searchRef}
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search modules..."
-          className={cn(
-            "h-12 w-full rounded-2xl border border-zinc-200/90 bg-crm-panel pr-20 pl-11 text-sm text-crm-text shadow-sm",
-            "placeholder:text-zinc-400 focus:border-blue-400/60 focus:ring-2 focus:ring-blue-500/15 focus:outline-none",
-            "dark:border-zinc-700/90 dark:focus:border-blue-500/40",
-          )}
-          aria-label="Search modules"
-        />
-        <kbd
-          className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[11px] font-medium text-zinc-500 sm:inline-flex dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
-          aria-hidden
-        >
-          <span className="text-xs">⌘</span>K
-        </kbd>
-      </div>
 
       <div
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3"
@@ -286,8 +192,7 @@ export default function ModuleHomeGrid() {
       >
         {!ready ?
           MODULES.map((_, i) => <ModuleCardSkeleton key={i} delayMs={i * 45} />)
-        : filteredModules.length > 0 ?
-          filteredModules.map((module, i) => (
+        : MODULES.map((module, i) => (
             <div
               key={module.href}
               className="relative animate-[contracts-loader-fade-in_0.45s_ease-out_both]"
@@ -304,9 +209,6 @@ export default function ModuleHomeGrid() {
               />
             </div>
           ))
-        : <p className="col-span-full py-8 text-center text-sm text-crm-text-muted">
-            No modules match your search.
-          </p>
         }
       </div>
     </div>

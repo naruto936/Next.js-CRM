@@ -1,5 +1,5 @@
-import { loadContractsFilterMeta } from "@/lib/contractFilterMeta";
-import { getContractsOfflineFilterMeta } from "@/lib/contractStaticData";
+import { loadContractsFilterMeta } from "@/lib/contracts/filterMeta";
+import { getContractsOfflineFilterMeta } from "@/lib/contracts/static";
 import { getZohoModuleFieldsUrl } from "@/lib/zoho";
 
 export async function GET() {

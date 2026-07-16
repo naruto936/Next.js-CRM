@@ -1,6 +1,6 @@
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { ShimmerBar } from "@/components/LoadingShimmer";
-import { isDateLikeField, isStatusField } from "@/lib/contractColumns";
+import { ShimmerBar } from "@/components/shared/LoadingShimmer";
+import { isDateLikeField, isStatusField } from "@/lib/contracts/columns";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 

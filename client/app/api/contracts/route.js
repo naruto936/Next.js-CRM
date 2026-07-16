@@ -1,12 +1,17 @@
-import { fetchZohoJson, ZOHO_CRM_BASE } from "@/lib/zoho";
-import { buildZohoModuleListUrls, parseListSearchParam } from "@/lib/zohoListQuery";
-import { buildOfflineContractsListResponse } from "@/lib/contractStaticData";
+import { buildOfflineContractsListResponse } from "@/lib/contracts/static";
 import {
   expandApiNamesForZohoFetch,
   getContractFieldDisplayValue,
   mergeLegacyFieldValues,
-} from "@/lib/contractColumns";
-import { mapZohoRecord, parseVisibleFields } from "@/lib/zohoContractMap";
+} from "@/lib/contracts/columns";
+import {
+  buildZohoModuleListUrls,
+  fetchZohoJson,
+  mapZohoRecord,
+  parseListSearchParam,
+  parseVisibleFields,
+  ZOHO_CRM_BASE,
+} from "@/lib/zoho";
 
 function mapListContract(row, visibleApiNames) {
   const fetchNames = expandApiNamesForZohoFetch(visibleApiNames);

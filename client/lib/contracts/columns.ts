@@ -27,15 +27,6 @@ function normalizeStoredApiName(name: string): string {
   return LEGACY_COLUMN_ALIASES[name] ?? name;
 }
 
-const LEGACY_TRUNCATED_SERVICE_API_NAMES = new Set(
-  Object.keys(LEGACY_COLUMN_ALIASES).filter((k) => /^(st|nd|rd)_Service_/.test(k)),
-);
-
-/** Zoho metadata sometimes exposes truncated API names (e.g. nd_ instead of 2nd_). */
-export function isLegacyTruncatedServiceApiName(apiName: string): boolean {
-  return LEGACY_TRUNCATED_SERVICE_API_NAMES.has(apiName);
-}
-
 export function normalizeContractFieldApiName(apiName: string): string {
   return normalizeStoredApiName(apiName);
 }

@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import SideBar from "@/components/SideBar";
-import ContractsTable from "@/components/ContractTable";
+import SideBar from "@/components/layout/SideBar";
+import ContractsTable from "@/components/contracts/ContractTable";
 import type {
   ContractFieldFilterSelection,
   ContractFilterApplyPayload,
-} from "@/lib/contractFilterTypes";
-import { CONTRACTS_STATIC_ALL_VIEW_ID } from "@/lib/contractStaticData";
+} from "@/lib/contracts/filterTypes";
+import { CONTRACTS_STATIC_ALL_VIEW_ID } from "@/lib/contracts/static";
 
 export default function ContractsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);

@@ -1,7 +1,7 @@
 import {
   ALLOWED_SUGGESTION_MODULES,
   fetchFieldSuggestions,
-} from "@/lib/fieldSuggestions";
+} from "@/lib/contracts/fieldSuggestions";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);

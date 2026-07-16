@@ -1,21 +1,22 @@
-import { fetchZohoJson, getZohoModuleSearchUrl, ZOHO_CRM_BASE } from "@/lib/zoho";
-import { buildFieldCriterion } from "@/lib/zohoSearchCriteria";
-import { formatFieldValue } from "@/lib/zohoContractMap";
+import {
+  buildFieldCriterion,
+  fetchZohoJson,
+  formatFieldValue,
+  getZohoModuleSearchUrl,
+  ZOHO_CRM_BASE,
+} from "@/lib/zoho";
 import {
   getKnownLookupFieldConfig,
   isLookupLikeDataType,
   isUserLikeDataType,
   looksLikeZohoId,
-} from "@/lib/resolveFilterValues";
+} from "@/lib/contracts/filterMeta";
 
 /** @type {Set<string>} */
 export const ALLOWED_SUGGESTION_MODULES = new Set([
   "Contracts",
   "Vendors",
-  "Bids",
   "Deals",
-  "Vendor_Invoices",
-  "ServiceCompletions",
 ]);
 
 const MAX_SUGGESTIONS = 100;

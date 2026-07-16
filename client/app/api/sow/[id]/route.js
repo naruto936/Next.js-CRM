@@ -1,7 +1,10 @@
-import { getStaticSowDetail, isStaticSowId } from "@/lib/sowStaticDetail";
-import { fetchZohoRecordById } from "@/lib/fetchZohoModuleRecord";
-import { allSowDetailApiNames, ZOHO_SOW_MODULE } from "@/lib/sowConfig";
-import { formatFieldValue, mapZohoRecord } from "@/lib/zohoContractMap";
+import {
+  allSowDetailApiNames,
+  getStaticSowDetail,
+  isStaticSowId,
+  ZOHO_SOW_MODULE,
+} from "@/lib/sow";
+import { fetchZohoRecordById, formatFieldValue, mapZohoRecord } from "@/lib/zoho";
 
 function mapScopeOfWork(raw) {
   if (!Array.isArray(raw)) return [];

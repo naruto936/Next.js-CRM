@@ -5,7 +5,7 @@ import {
   clampColumnWidthPx,
   loadColumnWidthOverrides,
   saveColumnWidthOverrides,
-} from "@/lib/resizableColumnWidths";
+} from "@/lib/table/resizableColumnWidths";
 
 export type ResizableColumnRef = { apiName: string; dataType?: string };
 

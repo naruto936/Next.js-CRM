@@ -1,14 +1,17 @@
-import { loadContractsFieldCatalog } from "@/lib/contractModuleFields";
-import { loadContractsRecordSections } from "@/lib/loadContractRecordLayout";
 import {
   collectRecordDetailApiNames,
   collectSubformFieldApiNames,
-} from "@/lib/contractRecordLayout";
-import { expandApiNamesForZohoFetch, mergeLegacyFieldValues } from "@/lib/contractColumns";
-import { mapContractScopeOfWork } from "@/lib/contractScopeOfWork";
-import { fetchZohoContractRecordById } from "@/lib/fetchZohoContractRecord";
-import { getStaticContractDetail, isStaticContractId } from "@/lib/contractStaticDetail";
-import { mapZohoRecord, parseVisibleFields } from "@/lib/zohoContractMap";
+  loadContractsRecordSections,
+  mapContractScopeOfWork,
+} from "@/lib/contracts/recordLayout";
+import { expandApiNamesForZohoFetch, mergeLegacyFieldValues } from "@/lib/contracts/columns";
+import { getStaticContractDetail, isStaticContractId } from "@/lib/contracts/static";
+import {
+  fetchZohoContractRecordById,
+  loadContractsFieldCatalog,
+  mapZohoRecord,
+  parseVisibleFields,
+} from "@/lib/zoho";
 
 export async function GET(request, context) {
   const { id } = await context.params;
@@ -106,7 +109,7 @@ export async function GET(request, context) {
   const contract = mapZohoRecord(row, scalarApiNames.length > 0 ? scalarApiNames : [...fieldSet]);
   contract.fields = mergeLegacyFieldValues(contract.fields);
   // console.log("contract.fields", JSON.stringify(contract.fields, null, 2));
-  /** @type {Record<string, import("@/lib/contractScopeOfWork").ContractScopeOfWorkRow[]>} */
+  /** @type {Record<string, import("@/lib/contracts/recordLayout").ContractScopeOfWorkRow[]>} */
   const scopeOfWorkByField = {};
   for (const apiName of scopeOfWorkFieldCandidates) {
     const raw = row[apiName];

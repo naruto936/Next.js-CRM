@@ -1,12 +1,13 @@
-import { getZohoModuleFieldsUrl } from "@/lib/zoho";
 import {
   FALLBACK_FIELD_CATALOG,
   isExcludedContractCatalogField,
   normalizeContractFieldApiName,
-} from "@/lib/contractColumns";
-import { buildFallbackRecordSections } from "@/lib/contractRecordLayout";
-import { loadContractsFieldCatalog } from "@/lib/contractModuleFields";
-import { loadContractsRecordSections } from "@/lib/loadContractRecordLayout";
+} from "@/lib/contracts/columns";
+import {
+  buildFallbackRecordSections,
+  loadContractsRecordSections,
+} from "@/lib/contracts/recordLayout";
+import { getZohoModuleFieldsUrl, loadContractsFieldCatalog } from "@/lib/zoho";
 
 function filterClientFields(fields, droppedSectionFieldApiNames) {
   const dropped = new Set(

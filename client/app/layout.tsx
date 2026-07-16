@@ -1,7 +1,7 @@
 import "./globals.css";
 import { Geist } from "next/font/google";
 import type { Viewport } from "next";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });

@@ -6,7 +6,7 @@ import {
   loadVisibleApiNames,
   normalizeVisibleApiNames,
   saveVisibleApiNames,
-} from "@/lib/contractColumns";
+} from "@/lib/contracts/columns";
 
 const listeners = new Set<() => void>();
 

@@ -3,31 +3,27 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bookmark, ChevronDown, Filter, Loader2, Search, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FilterSidebarFieldsSkeleton } from "@/components/LoadingShimmer";
+import { FilterSidebarFieldsSkeleton } from "@/components/shared/LoadingShimmer";
 import {
   buildSearchParamFromFieldFilters,
+  createSavedFilterId,
+  loadSavedFilters,
+  persistSavedFilters,
   selectionsFromCheckboxState,
-} from "@/lib/buildContractFilterCriteria";
+  type ContractFieldFilterSelection,
+  type ContractFilterApplyPayload,
+  type ContractFilterFieldMeta,
+  type ContractFilterOption,
+  type ContractFilterSection,
+  type SavedFilterPreset,
+} from "@/lib/contracts/filterTypes";
 import {
   criteriaApiNameForFilterField,
   getKnownLookupFieldConfig,
   isLookupLikeDataType,
   isUserLikeDataType,
   looksLikeZohoId,
-} from "@/lib/resolveFilterValues";
-import {
-  createSavedFilterId,
-  loadSavedFilters,
-  persistSavedFilters,
-  type SavedFilterPreset,
-} from "@/lib/savedFilters";
-import type {
-  ContractFieldFilterSelection,
-  ContractFilterApplyPayload,
-  ContractFilterFieldMeta,
-  ContractFilterOption,
-  ContractFilterSection,
-} from "@/lib/contractFilterTypes";
+} from "@/lib/contracts/filterMeta";
 
 function FilterSectionGroup({
   section,

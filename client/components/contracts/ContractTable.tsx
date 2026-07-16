@@ -7,15 +7,15 @@ import {
   TableCell,
   TableRow,
 } from "@/components/ui/table";
-import { ContractsCardsLoader, ContractsTableLoader } from "@/components/ContractsTableLoader";
-import { ListTable } from "@/components/ListTable";
-import { InlineLoadingShimmer, PaginationLoadingShimmer } from "@/components/LoadingShimmer";
-import { ContractColumnsSettings } from "@/components/ContractColumnsSettings";
-import { ResizableTableHeadCell } from "@/components/ResizableTableHeadCell";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ContractsCardsLoader, ContractsTableLoader } from "@/components/contracts/ContractsTableLoader";
+import { ListTable } from "@/components/shared/ListTable";
+import { InlineLoadingShimmer, PaginationLoadingShimmer } from "@/components/shared/LoadingShimmer";
+import { ContractColumnsSettings } from "@/components/contracts/ContractColumnsSettings";
+import { ResizableTableHeadCell } from "@/components/shared/ResizableTableHeadCell";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { useContractVisibleColumns } from "@/hooks/useContractVisibleColumns";
-import { useResizableColumnWidths } from "@/hooks/useResizableColumnWidths";
+import { useContractVisibleColumns } from "@/hooks/contracts/useContractVisibleColumns";
+import { useResizableColumnWidths } from "@/hooks/table/useResizableColumnWidths";
 import { cn } from "@/lib/utils";
 import {
   buildFieldsQueryParam,
@@ -28,28 +28,26 @@ import {
   isStatusField,
   normalizeContractFieldApiName,
   normalizeVisibleApiNames,
-} from "@/lib/contractColumns";
+} from "@/lib/contracts/columns";
 import type {
   ContractFieldFilterSelection,
   ContractFilterApplyPayload,
-} from "@/lib/contractFilterTypes";
+} from "@/lib/contracts/filterTypes";
 import {
   CONTRACTS_STATIC_ALL_VIEW_ID,
   CONTRACTS_STATIC_RECORDS,
   filterStaticContractRecords,
-} from "@/lib/contractStaticData";
+} from "@/lib/contracts/static";
 import {
   getContractFieldLookupId,
   getContractLookupHref,
-  isContractLookupField,
-} from "@/lib/contractRecordLookups";
-import {
   htmlToPlainText,
+  isContractLookupField,
   isRichTextField,
   sanitizeCrmRichHtml,
   shouldRenderAsRichHtml,
-} from "@/lib/richTextDisplay";
-import { CustomViewsDropdown } from "@/components/CustomViewsDropdown";
+} from "@/lib/contracts/recordLayout";
+import { CustomViewsDropdown } from "@/components/contracts/CustomViewsDropdown";
 
 function openContractRecord(recordId: string) {
   window.open(`/contracts/${recordId}`, "_blank", "noopener,noreferrer");

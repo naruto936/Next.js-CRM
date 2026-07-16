@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FileSignature } from "lucide-react";
-import { ContractRecordSections } from "@/components/ContractRecordSections";
+import { ContractRecordSections } from "@/components/contracts/ContractRecordSections";
 import {
   ContractRecordHeaderSkeleton,
   ContractRecordLoader,
-} from "@/components/ContractRecordLoader";
+} from "@/components/contracts/ContractRecordLoader";
 import {
   Table,
   TableBody,
@@ -16,10 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { formatCellForDisplay, isDateLikeField } from "@/lib/contractColumns";
-import type { CrmRecordSection, RecordFieldRow } from "@/lib/contractRecordLayout";
-import { labelForSowField, SOW_DETAIL_SECTIONS } from "@/lib/sowConfig";
-import type { SowScopeOfWorkRow } from "@/lib/sowStaticDetail";
+import { formatCellForDisplay, isDateLikeField } from "@/lib/contracts/columns";
+import type { CrmRecordSection, RecordFieldRow } from "@/lib/contracts/recordLayout";
+import {
+  labelForSowField,
+  SOW_DETAIL_SECTIONS,
+  type SowScopeOfWorkRow,
+} from "@/lib/sow";
 
 type SowRecord = {
   id: string;

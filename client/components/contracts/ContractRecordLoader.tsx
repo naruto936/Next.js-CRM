@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ShimmerBar } from "@/components/LoadingShimmer";
+import { ShimmerBar } from "@/components/shared/LoadingShimmer";
 
 function FieldSkeleton({ index }: { index: number }) {
   const delay = index * 45;

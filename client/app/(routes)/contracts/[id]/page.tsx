@@ -1,4 +1,4 @@
-import ContractRecordView from "@/components/ContractRecordView";
+import ContractRecordView from "@/components/contracts/ContractRecordView";
 
 type PageProps = {
   params: Promise<{ id: string }>;

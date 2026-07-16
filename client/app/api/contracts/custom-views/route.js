@@ -1,7 +1,9 @@
-import { createZohoCustomView } from "@/lib/createZohoCustomView";
-import { clearFilterMetaCache } from "@/lib/contractFilterMeta";
-import { criteriaApiNameForFilterField } from "@/lib/resolveFilterValues";
-import { deleteZohoCustomView, fetchZohoCustomViews } from "@/lib/zohoCustomViews";
+import {
+  clearFilterMetaCache,
+  createZohoCustomView,
+  criteriaApiNameForFilterField,
+} from "@/lib/contracts/filterMeta";
+import { deleteZohoCustomView, fetchZohoCustomViews } from "@/lib/zoho";
 
 /**
  * GET /api/contracts/custom-views

@@ -1,3 +1,5 @@
+import { buildAndCriteria, encodeZohoFiltersParam } from "@/lib/zoho";
+
 export type ContractFilterOption = {
   value: string;
   label: string;
@@ -55,3 +57,161 @@ export type ContractFilterApplyPayload = {
   /** Client-side list filtering (service completions static demo). */
   fieldSelections?: ContractFieldFilterSelection[];
 };
+
+/* ─── Build criteria / filters param ─── */
+
+/** Map UI / search operators → Zoho `filters` JSON comparators. */
+const FILTERS_COMPARATOR: Record<string, string> = {
+  equals: "equal",
+  equal: "equal",
+  not_equal: "not_equal",
+  starts_with: "starts_with",
+  contains: "contains",
+  in: "in",
+  between: "between",
+  greater_than: "greater_than",
+  greater_equal: "greater_equal",
+  less_than: "less_than",
+  less_equal: "less_equal",
+};
+
+export function buildCriteriaFromFieldFilters(
+  selections: ContractFieldFilterSelection[],
+): string | null {
+  const clauses = selections
+    .filter((s) => s.values.length > 0)
+    .map((s) => {
+      const operator =
+        s.operator ||
+        (s.values.length > 1 ? "in" : "equals");
+      return { apiName: s.apiName, operator, values: s.values };
+    });
+
+  return buildAndCriteria(clauses);
+}
+
+/**
+ * Build Zoho Get Records `filters` JSON (supports `contains`, unlike Search API).
+ */
+export function buildFiltersObjectFromFieldFilters(
+  selections: ContractFieldFilterSelection[],
+): { group_operator: "and"; group: unknown[] } | null {
+  const group: unknown[] = [];
+
+  for (const selection of selections) {
+    const values = selection.values.map((v) => String(v).trim()).filter(Boolean);
+    if (!selection.apiName || values.length === 0) continue;
+
+    const operator =
+      selection.operator ||
+      (values.length > 1 ? "in" : "equals");
+    const comparator = FILTERS_COMPARATOR[operator] ?? operator;
+
+    const value =
+      operator === "in" || operator === "between" || comparator === "in" || comparator === "between" ?
+        values
+      : values[0];
+
+    group.push({
+      field: { api_name: selection.apiName },
+      comparator,
+      value,
+    });
+  }
+
+  if (group.length === 0) return null;
+  return { group_operator: "and", group };
+}
+
+/**
+ * Prefer Zoho `filters` encoding so operators like `contains` work.
+ * Falls back to classic search criteria only if filters cannot be built.
+ */
+export function buildSearchParamFromFieldFilters(
+  selections: ContractFieldFilterSelection[],
+): string | null {
+  const filtersObj = buildFiltersObjectFromFieldFilters(selections);
+  if (filtersObj) return encodeZohoFiltersParam(filtersObj);
+  return buildCriteriaFromFieldFilters(selections);
+}
+
+/** @param {Map<string, Set<string>>} selectedByField */
+export function selectionsFromCheckboxState(
+  selectedByField: Map<string, Set<string>>,
+): ContractFieldFilterSelection[] {
+  const result: ContractFieldFilterSelection[] = [];
+  for (const [apiName, valueSet] of selectedByField) {
+    const values = [...valueSet];
+    if (values.length === 0) continue;
+    result.push({
+      apiName,
+      operator: values.length > 1 ? "in" : "equals",
+      values,
+    });
+  }
+  return result;
+}
+
+/* ─── Saved filter presets (localStorage) ─── */
+
+export type SavedManualFilter = {
+  apiName: string;
+  operator: string;
+  value: string;
+  value2?: string;
+  displayLabel?: string;
+};
+
+export type SavedFilterPreset = {
+  id: string;
+  name: string;
+  createdAt: number;
+  customViewId: string | null;
+  /** Checkbox / picklist selections (apiName → values). */
+  checkboxSelections: ContractFieldFilterSelection[];
+  /** Free-text / lookup / date drafts. */
+  manualFilters: SavedManualFilter[];
+};
+
+const STORAGE_PREFIX = "crm-saved-filters-v1:";
+
+export function savedFiltersStorageKey(module: string) {
+  return `${STORAGE_PREFIX}${module || "Contracts"}`;
+}
+
+function isSavedFilterPreset(value: unknown): value is SavedFilterPreset {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Record<string, unknown>;
+  return (
+    typeof row.id === "string" &&
+    typeof row.name === "string" &&
+    typeof row.createdAt === "number" &&
+    Array.isArray(row.checkboxSelections) &&
+    Array.isArray(row.manualFilters)
+  );
+}
+
+export function loadSavedFilters(module: string): SavedFilterPreset[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(savedFiltersStorageKey(module));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isSavedFilterPreset).sort((a, b) => b.createdAt - a.createdAt);
+  } catch {
+    return [];
+  }
+}
+
+export function persistSavedFilters(module: string, presets: SavedFilterPreset[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(savedFiltersStorageKey(module), JSON.stringify(presets));
+}
+
+export function createSavedFilterId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `sf-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}

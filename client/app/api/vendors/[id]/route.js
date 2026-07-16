@@ -1,7 +1,10 @@
-import { getStaticVendorDetail, isStaticVendorId } from "@/lib/vendorStaticDetail";
-import { fetchZohoRecordById } from "@/lib/fetchZohoModuleRecord";
-import { allVendorDetailApiNames, ZOHO_VENDORS_MODULE } from "@/lib/vendorConfig";
-import { mapZohoRecord } from "@/lib/zohoContractMap";
+import {
+  allVendorDetailApiNames,
+  getStaticVendorDetail,
+  isStaticVendorId,
+  ZOHO_VENDORS_MODULE,
+} from "@/lib/vendor";
+import { fetchZohoRecordById, mapZohoRecord } from "@/lib/zoho";
 
 function layoutLabelFromRow(row) {
   const layout = row?.$layout_id ?? row?.Layout;
