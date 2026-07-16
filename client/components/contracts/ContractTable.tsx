@@ -5,9 +5,11 @@ import { Menu, Settings2 } from "lucide-react";
 import {
   TableBody,
   TableCell,
+  TableHead,
   TableRow,
 } from "@/components/ui/table";
 import { ContractsCardsLoader, ContractsTableLoader } from "@/components/contracts/ContractsTableLoader";
+import { ContractListSelectionActions } from "@/components/contracts/ContractListSelectionActions";
 import { ListTable } from "@/components/shared/ListTable";
 import { InlineLoadingShimmer, PaginationLoadingShimmer } from "@/components/shared/LoadingShimmer";
 import { ContractColumnsSettings } from "@/components/contracts/ContractColumnsSettings";
@@ -48,6 +50,9 @@ import {
   shouldRenderAsRichHtml,
 } from "@/lib/contracts/recordLayout";
 import { CustomViewsDropdown } from "@/components/contracts/CustomViewsDropdown";
+
+const SELECT_COL_WIDTH = 44;
+const SELECT_COL = { apiName: "_select" } as const;
 
 function openContractRecord(recordId: string) {
   window.open(`/contracts/${recordId}`, "_blank", "noopener,noreferrer");
@@ -219,16 +224,14 @@ function getColumnCellClass(
   index: number,
   variant: "head" | "body",
 ) {
-  const isFirst = index === 0;
+  void col;
+  void index;
 
   if (variant === "head") {
-    return cn(
-      "column-heading overflow-visible",
-      isFirst ? "pl-6 pr-3" : "px-3",
-    );
+    return "column-heading overflow-visible px-3";
   }
 
-  return cn("overflow-hidden px-3 py-4 text-crm-text", isFirst && "pl-6 pr-3");
+  return "overflow-hidden px-3 py-4 text-crm-text";
 }
 
 const PAGE_SIZE = 100;
@@ -252,9 +255,13 @@ type ContractsTableProps = {
 function ContractCard({
   row,
   columns,
+  selected,
+  onSelectedChange,
 }: {
   row: ContractRecord;
   columns: { apiName: string; label: string; dataType: string }[];
+  selected: boolean;
+  onSelectedChange: (selected: boolean) => void;
 }) {
   const title =
     row.fields.Name?.trim() ||
@@ -267,6 +274,7 @@ function ContractCard({
       role="link"
       tabIndex={0}
       title={title}
+      data-state={selected ? "selected" : undefined}
       onClick={() => openContractRecord(row.id)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -274,9 +282,22 @@ function ContractCard({
           openContractRecord(row.id);
         }
       }}
-      className="crm-row-hover rounded-lg border border-crm-border bg-crm-panel p-3 transition hover:border-zinc-400 dark:hover:border-zinc-600"
+      className={cn(
+        "crm-row-hover rounded-lg border border-crm-border bg-crm-panel p-3 transition hover:border-zinc-400 dark:hover:border-zinc-600",
+        selected && "border-blue-500/40 bg-blue-500/5",
+      )}
     >
-      <p className="mb-3 truncate text-sm font-medium text-crm-text">{title}</p>
+      <div className="mb-3 flex items-start gap-2.5">
+        <input
+          type="checkbox"
+          checked={selected}
+          aria-label={`Select ${title}`}
+          className="mt-0.5 size-4 shrink-0 rounded border-crm-border accent-blue-500"
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => onSelectedChange(e.target.checked)}
+        />
+        <p className="min-w-0 flex-1 truncate text-sm font-medium text-crm-text">{title}</p>
+      </div>
       <dl className="space-y-2.5 text-sm">
         {columns.map((col) => {
           const value = formatCellForDisplay(
@@ -326,6 +347,7 @@ export default function ContractsTable({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [offlineDemo, setOfflineDemo] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
   const handleFieldsLoaded = useCallback((fields: CrmFieldMeta[]) => {
     setFieldCatalog(fields);
@@ -359,7 +381,12 @@ export default function ContractsTable({
 
   useEffect(() => {
     setPage(1);
+    setSelectedIds(new Set());
   }, [searchCriteria, customViewId, fieldSelections]);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [page]);
 
   useEffect(() => {
     let cancelled = false;
@@ -507,7 +534,34 @@ export default function ContractsTable({
       (customViewId != null && customViewId !== CONTRACTS_STATIC_ALL_VIEW_ID)
     : Boolean(searchCriteria || customViewId);
 
-  const colCount = Math.max(1, columnMeta.length);
+  const colCount = Math.max(1, columnMeta.length) + 1;
+  const pageIds = useMemo(() => contracts.map((row) => row.id), [contracts]);
+  const selectedCount = selectedIds.size;
+  const allPageSelected =
+    pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const somePageSelected =
+    pageIds.some((id) => selectedIds.has(id)) && !allPageSelected;
+
+  const toggleRowSelected = useCallback((id: string, selected: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAllOnPage = useCallback(() => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (pageIds.length > 0 && pageIds.every((id) => next.has(id))) {
+        for (const id of pageIds) next.delete(id);
+      } else {
+        for (const id of pageIds) next.add(id);
+      }
+      return next;
+    });
+  }, [pageIds]);
 
   const { columnSizeStyle, tableMinWidthPx, beginColumnResize } = useResizableColumnWidths(
     "crm-column-widths-contracts-v1",
@@ -515,10 +569,33 @@ export default function ContractsTable({
     getColumnWidthPx,
   );
 
+  const listColumns = useMemo(() => [SELECT_COL, ...columnMeta], [columnMeta]);
+  const loaderColumns = useMemo(
+    () => [
+      { apiName: SELECT_COL.apiName, label: "", dataType: "text" },
+      ...columnMeta,
+    ],
+    [columnMeta],
+  );
+
+  const listColumnSizeStyle = useCallback(
+    (col: { apiName: string }): CSSProperties => {
+      if (col.apiName === SELECT_COL.apiName) {
+        return {
+          width: SELECT_COL_WIDTH,
+          minWidth: SELECT_COL_WIDTH,
+          maxWidth: SELECT_COL_WIDTH,
+        };
+      }
+      return columnSizeStyle(col);
+    },
+    [columnSizeStyle],
+  );
+
   const tableWidthStyle = useMemo(
     (): CSSProperties => ({
-      width: tableMinWidthPx,
-      minWidth: tableMinWidthPx,
+      width: tableMinWidthPx + SELECT_COL_WIDTH,
+      minWidth: tableMinWidthPx + SELECT_COL_WIDTH,
     }),
     [tableMinWidthPx],
   );
@@ -526,15 +603,28 @@ export default function ContractsTable({
   function renderTableHeadRow() {
     return (
       <TableRow className="border-crm-border hover:bg-transparent">
+        <TableHead className="h-10 px-3 py-0">
+          <input
+            type="checkbox"
+            checked={allPageSelected}
+            ref={(el) => {
+              if (el) el.indeterminate = somePageSelected;
+            }}
+            aria-label="Select all contracts on this page"
+            className="size-4 rounded border-crm-border accent-blue-500"
+            disabled={loading || pageIds.length === 0}
+            onChange={toggleSelectAllOnPage}
+          />
+        </TableHead>
         {columnMeta.map(
           (col: { apiName: string; label: string; dataType: string }, i: number) => (
             <ResizableTableHeadCell
               key={col.apiName}
               className={getColumnCellClass(col, i, "head")}
               style={columnSizeStyle(col)}
-            label={col.label}
-            showDivider={i < columnMeta.length - 1}
-            onResizeStart={(clientX) => beginColumnResize(col.apiName, clientX, col)}
+              label={col.label}
+              showDivider={i < columnMeta.length - 1}
+              onResizeStart={(clientX) => beginColumnResize(col.apiName, clientX, col)}
             />
           ),
         )}
@@ -554,7 +644,7 @@ export default function ContractsTable({
 
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-crm-border bg-crm-panel">
         <div className="relative z-20 shrink-0 border-b border-crm-border bg-crm-panel px-3 py-3 sm:px-6">
-          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
             {onOpenFilters ?
               <Button
                 type="button"
@@ -571,6 +661,9 @@ export default function ContractsTable({
             : null}
             <div className="min-w-0 flex flex-1 flex-wrap items-center gap-x-2 gap-y-1.5 sm:gap-x-3">
               <h1 className="page-heading truncate text-base sm:text-lg">Contracts</h1>
+              {selectedCount > 0 ?
+                <ContractListSelectionActions />
+              : null}
               {onApplyCustomView ?
                 <CustomViewsDropdown
                   zohoModule="Contracts"
@@ -605,6 +698,15 @@ export default function ContractsTable({
                 : <>
                     <span className="font-medium tabular-nums text-crm-text">{totalLabel}</span>
                     {totalSuffix}
+                    {selectedCount > 0 ?
+                      <>
+                        {" · "}
+                        <span className="font-medium tabular-nums text-crm-text">
+                          {selectedCount.toLocaleString("en-US")}
+                        </span>
+                        {" selected"}
+                      </>
+                    : null}
                   </>
                 }
               </span>
@@ -641,14 +743,18 @@ export default function ContractsTable({
               <div className="hidden min-h-0 flex-1 flex-col md:flex">
                 <ListTable
                   tableWidthStyle={tableWidthStyle}
-                  columns={columnMeta}
-                  columnSizeStyle={columnSizeStyle}
+                  columns={listColumns}
+                  columnSizeStyle={listColumnSizeStyle}
                   headerRow={renderTableHeadRow()}
                 >
                   <ContractsTableLoader
-                    columns={columnMeta}
-                    getCellClassName={(col, i) => getColumnCellClass(col, i, "body")}
-                    getCellStyle={(col) => columnSizeStyle(col)}
+                    columns={loaderColumns}
+                    getCellClassName={(col, i) =>
+                      col.apiName === SELECT_COL.apiName ?
+                        "px-3 py-4"
+                      : getColumnCellClass(col, i - 1, "body")
+                    }
+                    getCellStyle={(col) => listColumnSizeStyle(col)}
                   />
                 </ListTable>
               </div>
@@ -658,15 +764,21 @@ export default function ContractsTable({
                 {contracts.length === 0 ?
                   <p className="py-12 text-center text-sm text-crm-text-muted">No contracts found.</p>
                 : contracts.map((row) => (
-                    <ContractCard key={row.id} row={row} columns={columnMeta} />
+                    <ContractCard
+                      key={row.id}
+                      row={row}
+                      columns={columnMeta}
+                      selected={selectedIds.has(row.id)}
+                      onSelectedChange={(selected) => toggleRowSelected(row.id, selected)}
+                    />
                   ))
                 }
               </div>
               <div className="hidden min-h-0 flex-1 flex-col md:flex">
                 <ListTable
                   tableWidthStyle={tableWidthStyle}
-                  columns={columnMeta}
-                  columnSizeStyle={columnSizeStyle}
+                  columns={listColumns}
+                  columnSizeStyle={listColumnSizeStyle}
                   headerRow={renderTableHeadRow()}
                 >
                   <TableBody>
@@ -679,11 +791,19 @@ export default function ContractsTable({
                             No contracts found.
                           </TableCell>
                         </TableRow>
-                      : contracts.map((row) => (
+                      : contracts.map((row) => {
+                          const isSelected = selectedIds.has(row.id);
+                          const rowTitle =
+                            row.fields.Name?.trim() ||
+                            row.fields.Company_Name?.trim() ||
+                            row.fields.Vendor?.trim() ||
+                            `Contract ${row.id}`;
+                          return (
                           <TableRow
                             key={row.id}
                             role="link"
                             tabIndex={0}
+                            data-state={isSelected ? "selected" : undefined}
                             className="crm-row-hover border-crm-border text-crm-text"
                             onClick={() => openContractRecord(row.id)}
                             onKeyDown={(e) => {
@@ -693,6 +813,19 @@ export default function ContractsTable({
                               }
                             }}
                           >
+                            <TableCell
+                              className="px-3 py-4"
+                              style={listColumnSizeStyle(SELECT_COL)}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                aria-label={`Select ${rowTitle}`}
+                                className="size-4 rounded border-crm-border accent-blue-500"
+                                onChange={(e) => toggleRowSelected(row.id, e.target.checked)}
+                              />
+                            </TableCell>
                             {columnMeta.map(
                               (
                                 col: { apiName: string; label: string; dataType: string },
@@ -720,7 +853,8 @@ export default function ContractsTable({
                               },
                             )}
                           </TableRow>
-                        ))
+                          );
+                        })
                       }
                     </TableBody>
                 </ListTable>

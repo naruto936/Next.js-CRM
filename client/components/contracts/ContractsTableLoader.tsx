@@ -28,6 +28,9 @@ function isLongTextColumn(apiName: string) {
 }
 
 function shimmerClassForColumn(col: TableLoaderColumn) {
+  if (col.apiName === "_select") {
+    return "size-4 max-w-full rounded";
+  }
   if (isStatusField(col.apiName)) {
     return "h-6 w-[72px] max-w-full rounded-full";
   }
