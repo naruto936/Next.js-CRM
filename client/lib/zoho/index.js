@@ -141,6 +141,11 @@ export const ZOHO_CRM_BASE = "https://www.zohoapis.com/crm/v7";
 export const ZOHO_CRM_V8_BASE = "https://www.zohoapis.com/crm/v8";
 export const ZOHO_CRM_MODULE_CONTRACTS = "Contracts";
 
+/** ZAPI key for CRM function execute (`auth_type=apikey`). Env overrides default. */
+export const ZOHO_FUNCTIONS_API_KEY =
+  process.env.ZOHO_FUNCTIONS_API_KEY?.trim() ||
+  "1003.70dbcb7d3d0747c200e13f9908cc6425.2b42b9673acd1f813fe12a82b5883ffa";
+
 /** Field metadata (Manage columns) — CRM v8 */
 export function getZohoModuleFieldsUrl(module = ZOHO_CRM_MODULE_CONTRACTS) {
   return `${ZOHO_CRM_V8_BASE}/settings/fields?module=${encodeURIComponent(module)}`;
@@ -200,6 +205,84 @@ export async function fetchZohoJson(url, options = {}) {
     invalidateZohoAccessTokenCache();
     token = await getZohoAccessToken({ force: true });
     result = await fetchWithToken(url, token, options);
+  }
+
+  return result;
+}
+
+/**
+ * Execute a Zoho CRM custom function (same as ZOHO.CRM.FUNCTIONS.execute).
+ *
+ * @param {string} functionApiName
+ * @param {Record<string, unknown>} functionArguments
+ * @param {{ authType?: "apikey" | "oauth" }} [options]
+ *   - `apikey` → auth_type=apikey&zapikey=… (recommended when OAuth lacks functions scope)
+ *   - `oauth` → auth_type=oauth + Zoho-oauthtoken header
+ * @returns {Promise<{ res: Response; body: any }>}
+ */
+export async function executeZohoCrmFunction(
+  functionApiName,
+  functionArguments,
+  options = {},
+) {
+  const name = String(functionApiName || "").trim();
+  if (!name) {
+    throw new Error("Zoho function API name is required.");
+  }
+
+  const authType = options.authType === "oauth" ? "oauth" : "apikey";
+  const formBody = new URLSearchParams({
+    arguments: JSON.stringify(functionArguments ?? {}),
+  });
+
+  if (authType === "apikey") {
+    const zapikey = ZOHO_FUNCTIONS_API_KEY.trim();
+    if (!zapikey) {
+      throw new Error(
+        "Missing Zoho functions API key: set ZOHO_FUNCTIONS_API_KEY.",
+      );
+    }
+
+    const url =
+      `${ZOHO_CRM_BASE}/functions/${encodeURIComponent(name)}/actions/execute` +
+      `?auth_type=apikey&zapikey=${encodeURIComponent(zapikey)}`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      cache: "no-store",
+      body: formBody,
+    });
+    const body = await res.json().catch(() => ({}));
+    return { res, body };
+  }
+
+  // OAuth2: https://www.zohoapis.com/crm/v7/functions/{name}/actions/execute?auth_type=oauth
+  const url = `${ZOHO_CRM_BASE}/functions/${encodeURIComponent(name)}/actions/execute?auth_type=oauth`;
+
+  async function postWithToken(token) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Zoho-oauthtoken ${token}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      cache: "no-store",
+      body: formBody,
+    });
+    const body = await res.json().catch(() => ({}));
+    return { res, body };
+  }
+
+  let token = await getZohoAccessToken();
+  let result = await postWithToken(token);
+
+  if (isZohoTokenExpiredResponse(result.res, result.body)) {
+    invalidateZohoAccessTokenCache();
+    token = await getZohoAccessToken({ force: true });
+    result = await postWithToken(token);
   }
 
   return result;

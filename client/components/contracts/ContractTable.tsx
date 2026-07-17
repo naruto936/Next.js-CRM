@@ -662,7 +662,9 @@ export default function ContractsTable({
             <div className="min-w-0 flex flex-1 flex-wrap items-center gap-x-2 gap-y-1.5 sm:gap-x-3">
               <h1 className="page-heading truncate text-base sm:text-lg">Contracts</h1>
               {selectedCount > 0 ?
-                <ContractListSelectionActions />
+                <ContractListSelectionActions
+                  selectedRecordIds={Array.from(selectedIds)}
+                />
               : null}
               {onApplyCustomView ?
                 <CustomViewsDropdown
