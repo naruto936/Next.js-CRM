@@ -17,6 +17,10 @@ import {
   CreateVendorInvoiceRecordsWidget,
 } from "@/widgets/create-vendor-invoice-records";
 import {
+  MASS_RENEWAL_CONTRACTS_BUTTON_LABEL,
+  MassRenewalContractsWidget,
+} from "@/widgets/mass-renewal-contracts";
+import {
   MISSING_INVOICE_EMAIL_BUTTON_LABEL,
   MissingInvoiceEmailWidget,
 } from "@/widgets/missing-invoice-email";
@@ -30,7 +34,7 @@ const RENEW_MENU_ITEMS = [
   "Testing renewal",
   ACTIVATE_VENDORS_BUTTON_LABEL,
   CREATE_NO_INVOICE_NEEDED_BUTTON_LABEL,
-  "Mass Renewal Contracts",
+  MASS_RENEWAL_CONTRACTS_BUTTON_LABEL,
   "Test mass widget",
   MISSING_INVOICE_EMAIL_BUTTON_LABEL,
   OLIO_MASS_UPDATE_BUTTON_LABEL,
@@ -56,6 +60,7 @@ export function ContractListSelectionActions({
   const [addMassSubformOpen, setAddMassSubformOpen] = useState(false);
   const [activateVendorsOpen, setActivateVendorsOpen] = useState(false);
   const [missingInvoiceEmailOpen, setMissingInvoiceEmailOpen] = useState(false);
+  const [massRenewalOpen, setMassRenewalOpen] = useState(false);
   const renewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,6 +118,12 @@ export function ContractListSelectionActions({
 
     if (action === MISSING_INVOICE_EMAIL_BUTTON_LABEL) {
       setMissingInvoiceEmailOpen(true);
+      onAction?.(action);
+      return;
+    }
+
+    if (action === MASS_RENEWAL_CONTRACTS_BUTTON_LABEL) {
+      setMassRenewalOpen(true);
       onAction?.(action);
       return;
     }
@@ -231,6 +242,13 @@ export function ContractListSelectionActions({
       <MissingInvoiceEmailWidget
         open={missingInvoiceEmailOpen}
         onClose={() => setMissingInvoiceEmailOpen(false)}
+        selectedRecordIds={selectedRecordIds}
+        module="Contracts"
+      />
+
+      <MassRenewalContractsWidget
+        open={massRenewalOpen}
+        onClose={() => setMassRenewalOpen(false)}
         selectedRecordIds={selectedRecordIds}
         module="Contracts"
       />
