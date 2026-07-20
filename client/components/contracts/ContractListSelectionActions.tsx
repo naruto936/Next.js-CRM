@@ -5,6 +5,10 @@ import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  ACTIVATE_VENDORS_BUTTON_LABEL,
+  ActivateVendorsWidget,
+} from "@/widgets/activate-vendors";
+import {
   ADD_MASS_SUBFORM_BUTTON_LABEL,
   AddMassSubformWidget,
 } from "@/widgets/add-mass-subform";
@@ -20,7 +24,7 @@ import {
 const RENEW_MENU_ITEMS = [
   "Renew Contracts",
   "Testing renewal",
-  "Activate Vendors",
+  ACTIVATE_VENDORS_BUTTON_LABEL,
   CREATE_NO_INVOICE_NEEDED_BUTTON_LABEL,
   "Mass Renewal Contracts",
   "Test mass widget",
@@ -46,6 +50,7 @@ export function ContractListSelectionActions({
   const [vendorInvoiceWidgetOpen, setVendorInvoiceWidgetOpen] = useState(false);
   const [olioMassUpdateOpen, setOlioMassUpdateOpen] = useState(false);
   const [addMassSubformOpen, setAddMassSubformOpen] = useState(false);
+  const [activateVendorsOpen, setActivateVendorsOpen] = useState(false);
   const renewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -91,6 +96,12 @@ export function ContractListSelectionActions({
 
     if (action === ADD_MASS_SUBFORM_BUTTON_LABEL) {
       setAddMassSubformOpen(true);
+      onAction?.(action);
+      return;
+    }
+
+    if (action === ACTIVATE_VENDORS_BUTTON_LABEL) {
+      setActivateVendorsOpen(true);
       onAction?.(action);
       return;
     }
@@ -195,6 +206,13 @@ export function ContractListSelectionActions({
       <AddMassSubformWidget
         open={addMassSubformOpen}
         onClose={() => setAddMassSubformOpen(false)}
+        selectedRecordIds={selectedRecordIds}
+        module="Contracts"
+      />
+
+      <ActivateVendorsWidget
+        open={activateVendorsOpen}
+        onClose={() => setActivateVendorsOpen(false)}
         selectedRecordIds={selectedRecordIds}
         module="Contracts"
       />
