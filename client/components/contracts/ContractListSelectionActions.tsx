@@ -8,6 +8,10 @@ import {
   CREATE_NO_INVOICE_NEEDED_BUTTON_LABEL,
   CreateVendorInvoiceRecordsWidget,
 } from "@/widgets/create-vendor-invoice-records";
+import {
+  OLIO_MASS_UPDATE_BUTTON_LABEL,
+  OlioMassUpdateWidget,
+} from "@/widgets/olio-mass-update";
 
 const RENEW_MENU_ITEMS = [
   "Renew Contracts",
@@ -17,7 +21,7 @@ const RENEW_MENU_ITEMS = [
   "Mass Renewal Contracts",
   "Test mass widget",
   "Missing Invoice Email",
-  "Olio Mass Update",
+  OLIO_MASS_UPDATE_BUTTON_LABEL,
   "Add SubForm",
   "Test Olio Mass Update",
 ] as const;
@@ -36,6 +40,7 @@ export function ContractListSelectionActions({
 }: ContractListSelectionActionsProps) {
   const [renewOpen, setRenewOpen] = useState(false);
   const [vendorInvoiceWidgetOpen, setVendorInvoiceWidgetOpen] = useState(false);
+  const [olioMassUpdateOpen, setOlioMassUpdateOpen] = useState(false);
   const renewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,6 +71,15 @@ export function ContractListSelectionActions({
 
     if (action === CREATE_NO_INVOICE_NEEDED_BUTTON_LABEL) {
       setVendorInvoiceWidgetOpen(true);
+      onAction?.(action);
+      return;
+    }
+
+    if (
+      action === OLIO_MASS_UPDATE_BUTTON_LABEL ||
+      action === "Test Olio Mass Update"
+    ) {
+      setOlioMassUpdateOpen(true);
       onAction?.(action);
       return;
     }
@@ -156,6 +170,13 @@ export function ContractListSelectionActions({
       <CreateVendorInvoiceRecordsWidget
         open={vendorInvoiceWidgetOpen}
         onClose={() => setVendorInvoiceWidgetOpen(false)}
+        selectedRecordIds={selectedRecordIds}
+        module="Contracts"
+      />
+
+      <OlioMassUpdateWidget
+        open={olioMassUpdateOpen}
+        onClose={() => setOlioMassUpdateOpen(false)}
         selectedRecordIds={selectedRecordIds}
         module="Contracts"
       />

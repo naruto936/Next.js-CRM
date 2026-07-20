@@ -23,6 +23,8 @@ const MONTHS = [
   "December",
 ] as const;
 
+type MonthName = (typeof MONTHS)[number];
+
 function buildYearOptions(centerYear: number) {
   const start = centerYear - 5;
   const end = centerYear + 5;
@@ -300,7 +302,12 @@ export function CreateVendorInvoiceRecordsWidget({
                   required
                   value={monthOfService}
                   disabled={submitting}
-                  onChange={(event) => setMonthOfService(event.target.value)}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if ((MONTHS as readonly string[]).includes(value)) {
+                      setMonthOfService(value as MonthName);
+                    }
+                  }}
                   className={selectClassName}
                 >
                   <option value="">-- Select Month --</option>
