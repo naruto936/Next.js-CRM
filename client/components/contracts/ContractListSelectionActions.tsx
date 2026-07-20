@@ -17,6 +17,10 @@ import {
   CreateVendorInvoiceRecordsWidget,
 } from "@/widgets/create-vendor-invoice-records";
 import {
+  MISSING_INVOICE_EMAIL_BUTTON_LABEL,
+  MissingInvoiceEmailWidget,
+} from "@/widgets/missing-invoice-email";
+import {
   OLIO_MASS_UPDATE_BUTTON_LABEL,
   OlioMassUpdateWidget,
 } from "@/widgets/olio-mass-update";
@@ -28,7 +32,7 @@ const RENEW_MENU_ITEMS = [
   CREATE_NO_INVOICE_NEEDED_BUTTON_LABEL,
   "Mass Renewal Contracts",
   "Test mass widget",
-  "Missing Invoice Email",
+  MISSING_INVOICE_EMAIL_BUTTON_LABEL,
   OLIO_MASS_UPDATE_BUTTON_LABEL,
   ADD_MASS_SUBFORM_BUTTON_LABEL,
   "Test Olio Mass Update",
@@ -51,6 +55,7 @@ export function ContractListSelectionActions({
   const [olioMassUpdateOpen, setOlioMassUpdateOpen] = useState(false);
   const [addMassSubformOpen, setAddMassSubformOpen] = useState(false);
   const [activateVendorsOpen, setActivateVendorsOpen] = useState(false);
+  const [missingInvoiceEmailOpen, setMissingInvoiceEmailOpen] = useState(false);
   const renewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,6 +107,12 @@ export function ContractListSelectionActions({
 
     if (action === ACTIVATE_VENDORS_BUTTON_LABEL) {
       setActivateVendorsOpen(true);
+      onAction?.(action);
+      return;
+    }
+
+    if (action === MISSING_INVOICE_EMAIL_BUTTON_LABEL) {
+      setMissingInvoiceEmailOpen(true);
       onAction?.(action);
       return;
     }
@@ -213,6 +224,13 @@ export function ContractListSelectionActions({
       <ActivateVendorsWidget
         open={activateVendorsOpen}
         onClose={() => setActivateVendorsOpen(false)}
+        selectedRecordIds={selectedRecordIds}
+        module="Contracts"
+      />
+
+      <MissingInvoiceEmailWidget
+        open={missingInvoiceEmailOpen}
+        onClose={() => setMissingInvoiceEmailOpen(false)}
         selectedRecordIds={selectedRecordIds}
         module="Contracts"
       />

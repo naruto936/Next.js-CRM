@@ -231,9 +231,10 @@ export async function executeZohoCrmFunction(
   }
 
   const authType = options.authType === "oauth" ? "oauth" : "apikey";
-  const formBody = new URLSearchParams({
-    arguments: JSON.stringify(functionArguments ?? {}),
-  });
+  const argumentsJson = JSON.stringify(functionArguments ?? {});
+  // Zoho function execute often ignores body `arguments` for button/REST
+  // functions — query-string `arguments` is what gets applied (verified).
+  const formBody = new URLSearchParams({ arguments: argumentsJson });
 
   if (authType === "apikey") {
     const zapikey = ZOHO_FUNCTIONS_API_KEY.trim();
@@ -245,7 +246,8 @@ export async function executeZohoCrmFunction(
 
     const url =
       `${ZOHO_CRM_BASE}/functions/${encodeURIComponent(name)}/actions/execute` +
-      `?auth_type=apikey&zapikey=${encodeURIComponent(zapikey)}`;
+      `?auth_type=apikey&zapikey=${encodeURIComponent(zapikey)}` +
+      `&arguments=${encodeURIComponent(argumentsJson)}`;
 
     const res = await fetch(url, {
       method: "POST",
@@ -260,7 +262,9 @@ export async function executeZohoCrmFunction(
   }
 
   // OAuth2: https://www.zohoapis.com/crm/v7/functions/{name}/actions/execute?auth_type=oauth
-  const url = `${ZOHO_CRM_BASE}/functions/${encodeURIComponent(name)}/actions/execute?auth_type=oauth`;
+  const url =
+    `${ZOHO_CRM_BASE}/functions/${encodeURIComponent(name)}/actions/execute` +
+    `?auth_type=oauth&arguments=${encodeURIComponent(argumentsJson)}`;
 
   async function postWithToken(token) {
     const res = await fetch(url, {
