@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FileText } from "lucide-react";
+import { ContractRecordActions } from "@/components/contracts/ContractRecordActions";
 import { ContractRecordSections } from "@/components/contracts/ContractRecordSections";
 import {
   ContractRecordHeaderSkeleton,
@@ -254,9 +255,10 @@ export default function ContractRecordView({ id }: ContractRecordViewProps) {
                 </>
               }
             </div>
-            {!loading && statusValue ?
-              <div className="ml-auto shrink-0">
-                <StatusBadge status={statusValue} />
+            {!loading && contract ?
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                {statusValue ? <StatusBadge status={statusValue} /> : null}
+                <ContractRecordActions recordId={contract.id} />
               </div>
             : null}
           </div>

@@ -5,6 +5,7 @@ import { CREATE_VENDOR_INVOICE_RECORDS_WIDGET } from "@/widgets/create-vendor-in
 import { MASS_RENEWAL_CONTRACTS_WIDGET } from "@/widgets/mass-renewal-contracts";
 import { MISSING_INVOICE_EMAIL_WIDGET } from "@/widgets/missing-invoice-email";
 import { OLIO_MASS_UPDATE_WIDGET } from "@/widgets/olio-mass-update";
+import { SEND_MESSAGE_WIDGET } from "@/widgets/send-message";
 
 /**
  * Registry of list-action widgets.
@@ -17,6 +18,7 @@ export const CRM_WIDGETS = [
   ACTIVATE_VENDORS_WIDGET,
   MISSING_INVOICE_EMAIL_WIDGET,
   MASS_RENEWAL_CONTRACTS_WIDGET,
+  SEND_MESSAGE_WIDGET,
 ] as const satisfies readonly CrmWidgetDefinition[];
 
 export type CrmWidgetId = (typeof CRM_WIDGETS)[number]["id"];
@@ -56,3 +58,7 @@ export {
   OLIO_MASS_UPDATE_WIDGET,
   OlioMassUpdateWidget,
 } from "@/widgets/olio-mass-update";
+export {
+  SEND_MESSAGE_WIDGET,
+  SendMessageWidget,
+} from "@/widgets/send-message";
