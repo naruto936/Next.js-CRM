@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -29,8 +29,8 @@ import {
   OlioMassUpdateWidget,
 } from "@/widgets/olio-mass-update";
 
+/** Menu items — "Renew Contracts" is 2nd-to-last. */
 const RENEW_MENU_ITEMS = [
-  "Renew Contracts",
   "Testing renewal",
   ACTIVATE_VENDORS_BUTTON_LABEL,
   CREATE_NO_INVOICE_NEEDED_BUTTON_LABEL,
@@ -39,6 +39,7 @@ const RENEW_MENU_ITEMS = [
   MISSING_INVOICE_EMAIL_BUTTON_LABEL,
   OLIO_MASS_UPDATE_BUTTON_LABEL,
   ADD_MASS_SUBFORM_BUTTON_LABEL,
+  "Renew Contracts",
   "Test Olio Mass Update",
 ] as const;
 
@@ -55,6 +56,7 @@ export function ContractListSelectionActions({
   onAction,
 }: ContractListSelectionActionsProps) {
   const [renewOpen, setRenewOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [vendorInvoiceWidgetOpen, setVendorInvoiceWidgetOpen] = useState(false);
   const [olioMassUpdateOpen, setOlioMassUpdateOpen] = useState(false);
   const [addMassSubformOpen, setAddMassSubformOpen] = useState(false);
@@ -62,6 +64,13 @@ export function ContractListSelectionActions({
   const [missingInvoiceEmailOpen, setMissingInvoiceEmailOpen] = useState(false);
   const [massRenewalOpen, setMassRenewalOpen] = useState(false);
   const renewRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return RENEW_MENU_ITEMS;
+    return RENEW_MENU_ITEMS.filter((item) => item.toLowerCase().includes(q));
+  }, [query]);
 
   useEffect(() => {
     if (!renewOpen) return;
@@ -84,6 +93,15 @@ export function ContractListSelectionActions({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
+  }, [renewOpen]);
+
+  useEffect(() => {
+    if (!renewOpen) {
+      setQuery("");
+      return;
+    }
+    const frame = requestAnimationFrame(() => searchRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
   }, [renewOpen]);
 
   function handleAction(action: string) {
@@ -169,12 +187,12 @@ export function ContractListSelectionActions({
               aria-expanded={renewOpen}
               onClick={() => setRenewOpen((open) => !open)}
             >
-              Renew Contracts
+              Buttons
             </button>
             <button
               type="button"
               className="crm-toolbar-btn flex h-8 w-8 items-center justify-center rounded-none border-0 border-l border-crm-border text-crm-text hover:bg-crm-panel-muted"
-              aria-label="Open renew contracts menu"
+              aria-label="Open buttons menu"
               aria-haspopup="menu"
               aria-expanded={renewOpen}
               onClick={() => setRenewOpen((open) => !open)}
@@ -191,21 +209,46 @@ export function ContractListSelectionActions({
 
           {renewOpen ?
             <div
-              className="absolute left-0 top-[calc(100%+0.35rem)] z-50 min-w-[14rem] overflow-hidden rounded-lg border border-crm-border bg-crm-panel py-1 shadow-xl"
+              className="absolute left-0 top-[calc(100%+0.35rem)] z-50 w-[min(18rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-crm-border bg-crm-panel shadow-xl"
               role="menu"
-              aria-label="Renew contracts actions"
+              aria-label="Buttons actions"
             >
-              {RENEW_MENU_ITEMS.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  role="menuitem"
-                  className="flex w-full cursor-pointer px-3 py-2 text-left text-sm text-crm-text transition hover:bg-crm-panel-muted"
-                  onClick={() => handleAction(item)}
-                >
-                  {item}
-                </button>
-              ))}
+              <div className="border-b border-crm-border p-2.5">
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-crm-text-muted"
+                    aria-hidden
+                  />
+                  <input
+                    ref={searchRef}
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search Button"
+                    className="h-9 w-full rounded-lg border border-crm-border bg-crm-panel py-2 pl-8 pr-3 text-sm text-crm-text outline-none placeholder:text-crm-text-muted focus:border-blue-500"
+                    aria-label="Search buttons"
+                  />
+                </div>
+              </div>
+
+              <div className="max-h-[min(22rem,50vh)] overflow-y-auto overscroll-contain py-1">
+                {filtered.length === 0 ?
+                  <p className="px-3 py-6 text-center text-sm text-crm-text-muted">
+                    No buttons match your search.
+                  </p>
+                : filtered.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full cursor-pointer px-3 py-2.5 text-left text-sm text-crm-text transition hover:bg-blue-500/10"
+                      onClick={() => handleAction(item)}
+                    >
+                      {item}
+                    </button>
+                  ))
+                }
+              </div>
             </div>
           : null}
         </div>

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   SEND_MESSAGE_BUTTON_LABEL,
@@ -12,6 +11,10 @@ import {
   CREATE_CONTRACT_PDF_BUTTON_LABEL,
   CreateContractPdfWidget,
 } from "@/widgets/create-contract-pdf";
+import {
+  COMPLIANCE_FIELDS_BUTTON_LABEL,
+  ComplianceFieldsWidget,
+} from "@/widgets/compliance-fields";
 
 /** Record-view custom buttons (Zoho-style labels). */
 export const CONTRACT_RECORD_BUTTONS = [
@@ -24,7 +27,7 @@ export const CONTRACT_RECORD_BUTTONS = [
   "Status Pending Sales Review",
   "Status Client Sending RFP",
   "Status Sourcing Vendor",
-  "Complince Fields",
+  COMPLIANCE_FIELDS_BUTTON_LABEL,
   "PO Addendum",
   "Status Client Negotiations",
   "Status Vendor Compliance",
@@ -48,6 +51,7 @@ export function ContractRecordActions({
   const [query, setQuery] = useState("");
   const [sendMessageOpen, setSendMessageOpen] = useState(false);
   const [createContractPdfOpen, setCreateContractPdfOpen] = useState(false);
+  const [complianceFieldsOpen, setComplianceFieldsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -106,30 +110,45 @@ export function ContractRecordActions({
       return;
     }
 
+    if (action === COMPLIANCE_FIELDS_BUTTON_LABEL) {
+      setComplianceFieldsOpen(true);
+      onAction?.(action, recordId);
+      return;
+    }
+
     onAction?.(action, recordId);
   }
 
   return (
     <>
       <div ref={rootRef} className={cn("relative", className)}>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="crm-toolbar-btn h-8 gap-1.5 px-3 text-sm"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          onClick={() => setOpen((value) => !value)}
-        >
-          Buttons
-          <ChevronDown
-            className={cn(
-              "size-3.5 text-crm-text-muted transition",
-              open && "rotate-180",
-            )}
-            aria-hidden
-          />
-        </Button>
+        <div className="inline-flex overflow-hidden rounded-lg border border-crm-border bg-crm-panel">
+          <button
+            type="button"
+            className="crm-toolbar-btn h-8 rounded-none border-0 px-3 text-sm font-medium text-crm-text hover:bg-crm-panel-muted"
+            aria-haspopup="menu"
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
+            Buttons
+          </button>
+          <button
+            type="button"
+            className="crm-toolbar-btn flex h-8 w-8 items-center justify-center rounded-none border-0 border-l border-crm-border text-crm-text hover:bg-crm-panel-muted"
+            aria-label="Open buttons menu"
+            aria-haspopup="menu"
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
+            <ChevronDown
+              className={cn(
+                "size-4 text-crm-text-muted transition",
+                open && "rotate-180",
+              )}
+              aria-hidden
+            />
+          </button>
+        </div>
 
         {open ?
           <div
@@ -187,6 +206,13 @@ export function ContractRecordActions({
       <CreateContractPdfWidget
         open={createContractPdfOpen}
         onClose={() => setCreateContractPdfOpen(false)}
+        selectedRecordIds={[recordId]}
+        module="Contracts"
+      />
+
+      <ComplianceFieldsWidget
+        open={complianceFieldsOpen}
+        onClose={() => setComplianceFieldsOpen(false)}
         selectedRecordIds={[recordId]}
         module="Contracts"
       />
