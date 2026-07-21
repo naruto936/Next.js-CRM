@@ -17,7 +17,7 @@ export const ZOHO_CLIENT_SECRET =
 
 export const ZOHO_REFRESH_TOKEN =
   process.env.ZOHO_REFRESH_TOKEN?.trim() ||
-  "1000.aec79cc655488390ee24a2775897eb81.d8f701534a016d73f1c89865102e7ef5";
+  "1000.476e128b37016b2a0f83416ce4762068.5a5cefee92eb3d44775f61774ab7e6a1";
 
 const EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 
@@ -220,11 +220,7 @@ export async function fetchZohoJson(url, options = {}) {
  *   - `oauth` → auth_type=oauth + Zoho-oauthtoken header
  * @returns {Promise<{ res: Response; body: any }>}
  */
-export async function executeZohoCrmFunction(
-  functionApiName,
-  functionArguments,
-  options = {},
-) {
+export async function executeZohoCrmFunction(functionApiName, functionArguments, options = {}) {
   const name = String(functionApiName || "").trim();
   if (!name) {
     throw new Error("Zoho function API name is required.");
@@ -239,9 +235,7 @@ export async function executeZohoCrmFunction(
   if (authType === "apikey") {
     const zapikey = ZOHO_FUNCTIONS_API_KEY.trim();
     if (!zapikey) {
-      throw new Error(
-        "Missing Zoho functions API key: set ZOHO_FUNCTIONS_API_KEY.",
-      );
+      throw new Error("Missing Zoho functions API key: set ZOHO_FUNCTIONS_API_KEY.");
     }
 
     const url =
@@ -694,9 +688,10 @@ export async function fetchZohoCustomViews(module = "Contracts") {
   };
 
   const labelToKey = new Map(
-    Object.entries({ ...CUSTOM_VIEW_CATEGORY_LABELS, ...translations }).map(
-      ([key, label]) => [label, key],
-    ),
+    Object.entries({ ...CUSTOM_VIEW_CATEGORY_LABELS, ...translations }).map(([key, label]) => [
+      label,
+      key,
+    ]),
   );
 
   views.sort((a, b) => {

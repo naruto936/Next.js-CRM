@@ -1,0 +1,2001 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Contract Generator</title>
+    <style>
+      body {
+        font-family: "Questrial", sans-serif !important;
+        text-align: left;
+      }
+
+      /* p,
+        li {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        ul,
+        ol {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            page-break-after: avoid;
+        }
+
+        .no-break {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        } */
+
+      .insurance-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+      }
+
+      .insurance-table td {
+        border: 1px solid #000;
+        padding: 6px 8px;
+        vertical-align: top;
+      }
+
+      .insurance-table .section-header {
+        background: #444;
+        color: #fff;
+        font-weight: bold;
+      }
+
+      .tab-container {
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 20px;
+      }
+
+      .tab-button {
+        padding: 10px 20px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .field-box {
+        display: inline-block;
+        font-family: monospace;
+        white-space: pre;
+        line-height: 1;
+        vertical-align: middle;
+      }
+
+      .addendum-list li {
+        margin-bottom: 5px;
+        padding-left: 0;
+        line-height: 1.4;
+      }
+
+      .addendum-list li strong {
+        display: inline-block;
+        vertical-align: top;
+        margin-right: 5px;
+      }
+
+      .tab-button.active {
+        border-bottom: 3px solid #2196f3;
+        color: #2196f3;
+      }
+
+      .tab-content {
+        display: none;
+        padding: 20px;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .contract-content {
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin: 20px 0;
+        min-height: 500px;
+      }
+
+      .editable-content {
+        width: 100%;
+        min-height: 200px;
+        padding: 10px;
+        margin: 10px 0;
+      }
+
+      .generate-pdf-btn {
+        background-color: #2196f3;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+
+      .send-zoho-sign-btn {
+        background-color: #077c1c;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+
+      .client-contract-header {
+        text-align: left;
+        margin-bottom: 30px;
+      }
+
+      .service-address {
+        margin: 20px 0;
+        padding: 10px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+      }
+
+      .pricing-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+      }
+
+      .pricing-table th,
+      .pricing-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+
+      .pricing-table th {
+        background-color: #f5f5f5;
+      }
+
+      .contract-terms {
+        margin: 20px 0;
+      }
+
+      .maintenance-options {
+        margin: 20px 0;
+      }
+
+      .maintenance-options h4 {
+        color: #2196f3;
+        margin-top: 20px;
+      }
+
+      .signature-section {
+        margin-top: 40px;
+        border-top: 1px solid #ddd;
+        padding-top: 20px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .signature-safe-page-break {
+        break-before: page;
+        page-break-before: always;
+      }
+
+      .signature-section p,
+      .contract-content p,
+      .contract-content li {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        orphans: 2;
+        widows: 2;
+      }
+
+      .addendum-section,
+      #Contract\ Addendum {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .contract-content h2,
+      .contract-content h3,
+      .contract-content h4 {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+
+      .insurance-section {
+        margin-top: 40px;
+        border-top: 1px solid #ddd;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        page-break-before: always;
+        break-before: always;
+      }
+
+      .vendor-contract-header {
+        text-align: left;
+        margin-bottom: 30px;
+      }
+
+      .parties-section {
+        margin: 20px 0;
+      }
+
+      .party-details {
+        margin: 15px 0;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-left: 3px solid #2196f3;
+      }
+
+      .scope-table,
+      .payment-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+
+      .scope-table th,
+      .scope-table td,
+      .payment-table th,
+      .payment-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+
+      .scope-table th,
+      .payment-table th {
+        background-color: #f5f5f5;
+      }
+
+      .vendor-requirements {
+        margin: 20px 0;
+      }
+
+      .vendor-requirements ul {
+        list-style-type: disc;
+        padding-left: 20px;
+      }
+
+      .signature-block {
+        display: inline-block;
+        width: 45%;
+        margin: 20px 2%;
+        vertical-align: top;
+      }
+
+      .term-details {
+        background-color: #f9f9f9;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #2196f3;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 10px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error-message {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1001;
+        max-width: 80%;
+        text-align: center;
+      }
+
+      .error-message h3 {
+        color: #f44336;
+        margin-top: 0;
+      }
+
+      .error-message button {
+        background: #f44336;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      .error-message button:hover {
+        background: #d32f2f;
+      }
+
+      .logo {
+        width: 130px;
+        display: block;
+        margin: 0 auto;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/widgets/create-contract-pdf/zoho-shim.js"></script>
+    <!-- jsPDF + html2canvas + dompurify + pdf.js-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+      if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div class="tab-container">
+      <button class="tab-button active" onclick="switchTab('client')">Client Contract</button>
+      <button class="tab-button" onclick="switchTab('vendor')">Vendor Contract</button>
+    </div>
+
+    <div id="client-tab" class="tab-content active">
+      <div class="contract-content" id="client-contract">
+        <!-- Client contract content will be populated dynamically -->
+      </div>
+      <button class="generate-pdf-btn" onclick="generatePDF('client')">Generate PDF</button>
+      <button class="send-zoho-sign-btn" onclick="sendZohoSign('Client')">
+        Send with Zoho Sign
+      </button>
+    </div>
+
+    <div id="vendor-tab" class="tab-content">
+      <div class="contract-content" id="vendor-contract">
+        <!-- Vendor contract content will be populated dynamically -->
+      </div>
+      <button class="generate-pdf-btn" onclick="generatePDF('vendor')">Generate PDF</button>
+      <button class="send-zoho-sign-btn" onclick="sendZohoSign('Vendor')">
+        Send with Zoho Sign
+      </button>
+    </div>
+    <script>
+      let ContractData = {};
+      ZOHO.embeddedApp.on("PageLoad", async function (entityData) {
+        entityId = entityData.EntityId;
+        console.log("called");
+        loadContractData(entityId);
+      });
+
+      function loadContractData(entityId) {
+        showLoadingOverlay("Loading contract data...");
+        ZOHO.CRM.API.getRecord({ Entity: "Contracts", RecordID: `${entityId}` })
+          .then(function (response) {
+            if (response.data && response.data.length > 0) {
+              const dealData = response.data[0];
+              console.log("dealData:: => ", dealData);
+
+              try {
+                if (!dealData.Company_Name) {
+                  throw new Error("Company_Name is missing in the deal data");
+                }
+
+                var site_data = dealData.Company_Name;
+                var site_id = site_data.id;
+                console.log("Site ID:", site_id);
+
+                validateContractData(dealData);
+
+                var scope_of_work_data = dealData.Our_Services_SubForm;
+                if (!scope_of_work_data) {
+                  throw new Error("Scope of Work data is missing");
+                }
+
+                console.log("Scope of Work Data:", scope_of_work_data);
+
+                // Fetch related data
+                return fetchRelatedData(dealData, scope_of_work_data);
+              } catch (error) {
+                console.error("Error in data processing:", error.message);
+                throw error;
+              }
+            } else {
+              throw new Error("No deal data found");
+            }
+          })
+          .then(function (enrichedDealData) {
+            console.log("Enriched Deal Data:", enrichedDealData);
+            ContractData = enrichedDealData;
+            populateContracts(enrichedDealData);
+            hideLoadingOverlay();
+          })
+          .catch(function (error) {
+            hideLoadingOverlay();
+            console.error("Error loading contract data:", error.message);
+            showError("Error loading contract data", error.message);
+          });
+      }
+
+      function showError(title, message) {
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "error-message";
+        errorDiv.innerHTML = `
+                    <h3>${title}</h3>
+                    <p>${message}</p>
+                    <button onclick="this.parentElement.remove()">Close</button>
+                `;
+        document.body.appendChild(errorDiv);
+      }
+
+      function showLoadingOverlay(message = "Loading...") {
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "loading-overlay";
+        loadingDiv.innerHTML = `
+                <div class="loading-spinner"></div>
+                <p>${message}</p>
+            `;
+        document.body.appendChild(loadingDiv);
+      }
+
+      function validateContractData(dealData) {
+        console.log("dealData => ", dealData);
+        const requiredFields = {
+          Vendor: "Client/Vendor Name",
+          Company_Name: "Site Data",
+          Site_Street: "Site Street",
+          Site_City: "Site City",
+          Site_State: "Site State",
+          Site_Zip: "Site Zip",
+          Contract_Start_Date: "Start Date",
+          Contract_End_Date: "End Date",
+        };
+
+        const missingFields = [];
+
+        for (const [field, label] of Object.entries(requiredFields)) {
+          if (!dealData[field]) {
+            missingFields.push(`${label} (${field}: ${JSON.stringify(dealData[field])})`);
+          }
+        }
+
+        if (missingFields.length > 0) {
+          console.log("dealData how do you get here => ", dealData);
+          throw new Error(
+            `Missing or invalid required fields:\n${missingFields.join("\n")}\n\nPlease check the deal record and ensure all required fields are filled out.`,
+          );
+        }
+
+        return true;
+      }
+
+      var property_maintanence = [];
+
+      function fetchRelatedData(dealData, scope_of_work_data) {
+        console.log("dealData", dealData);
+        console.log("scope_of_work_data", scope_of_work_data);
+        const promises = [
+          (scopeOfWork = scope_of_work_data),
+          dealData.Sales_Associate ?
+            ZOHO.CRM.API.getRecord({
+              Entity: "users",
+              RecordID: dealData.Sales_Associate.id,
+            })
+              .then((response) => {
+                return response;
+              })
+              .catch((error) => {
+                console.error("Error fetching Sales Associate:", error);
+                return null;
+              })
+          : Promise.resolve(null),
+          dealData.Account_Manager ?
+            ZOHO.CRM.API.getRecord({
+              Entity: "users",
+              RecordID: dealData.Account_Manager.id,
+            })
+          : Promise.resolve(null),
+        ];
+
+        scopeOfWork = JSON.stringify(scopeOfWork);
+        return Promise.all(promises).then(([scopeOfWork, salesAssociate, accountManager]) => {
+          return {
+            ...dealData,
+            scopeOfWork: scopeOfWork.data || [],
+            salesAssociateDetails: salesAssociate ? salesAssociate : null,
+            accountManagerDetails: accountManager ? accountManager : null,
+          };
+        });
+      }
+
+      function hideLoadingOverlay() {
+        const overlay = document.querySelector(".loading-overlay");
+        if (overlay) {
+          overlay.remove();
+        }
+      }
+
+      async function populateContracts(dealData) {
+        // We'll implement this function to populate both contracts
+        const clientContract = document.getElementById("client-contract");
+        const vendorContract = document.getElementById("vendor-contract");
+
+        // Populate client contract template with isVendor=false
+        clientContract.innerHTML = generateClientContract(dealData, false);
+
+        // Populate vendor contract template with isVendor=true
+        vendorContract.innerHTML = generateVendorContract(dealData, true);
+
+        // Call renderMaintenanceSection for both contracts
+        const maintenanceSections = document.querySelectorAll(".maintenance-options");
+        maintenanceSections.forEach(async (section) => {
+          const maintenanceHTML = await generateMaintenanceSection(scopeOfWork);
+          section.innerHTML = maintenanceHTML;
+        });
+        let userData = await ZOHO.CRM.CONFIG.getCurrentUser().catch(function () {
+          return { users: [] };
+        });
+        let userAccess = ["2168928000000893001", "2168928000000938001"];
+        let userId = userData?.users?.[0]?.id || "";
+        console.log(userId);
+
+        // Only allow editable content for authorized users
+        if (userId && userAccess.includes(userId)) {
+          makeContentEditable();
+        }
+      }
+
+      function generateClientContract(dealData, isVendor = false) {
+        const address = `${dealData.Site_Street || ""}, ${dealData.Site_City || ""}, ${dealData.Site_State || ""}, ${dealData.Site_Zip || ""}`;
+        const salesAssociate = dealData.salesAssociateDetails || {};
+        const accountManager = dealData.accountManagerDetails || {};
+        const isFields =
+          dealData.Salt_Billing_Frequency_and_Type ||
+          dealData.Snow_Removal_Salt_Area_Inclusions ||
+          dealData.Site_Open_Time ||
+          dealData.Trigger_Point;
+
+        const fieldsHTML = `
+                ${dealData.Trigger_Point ? `<p>Trigger Point : ${dealData.Trigger_Point}</p>` : ""}
+                ${dealData.Salt_Billing_Frequency_and_Type ? `<p>Salt Billing Frequency and Type : ${dealData.Salt_Billing_Frequency_and_Type}</p>` : ""}
+                ${dealData.Snow_Removal_Salt_Area_Inclusions ? `<p>Snow Removal/Salt Area Inclusions: ${dealData.Snow_Removal_Salt_Area_Inclusions}</p>` : ""}
+                ${dealData.Site_Open_Time ? `<p>Site Open Time: ${dealData.Site_Open_Time}</p>` : ""}
+            `;
+
+        return `
+            <img src="/widgets/create-contract-pdf/logo.png" id="OlioLogo" alt="Olio-logo" class="logo" onerror="this.style.display='none'">
+                <center><h2>Olio Group Maintenance Contract Agreement Terms</h2></center>
+                
+                <p>This contract is an agreement between Olio Group, which will be referred to as the contractor and
+                ${dealData.Vendor.name || ""} who will be referred to as the client.</p>
+
+                <div class="service-address">
+                    <h3>Service Address:</h3>
+                    <p>Site ID: ${dealData.Company_Name?.name || ""}</p>
+                    <p>${address}</p>
+                    <p><em>This site ID should be used in any communication in order to reference the appropriate location.</em></p>
+                </div>
+
+                <div class="contract-terms">
+                    <p>Contractor and client hereby promise and agree to the following:</p>
+                    <ol>
+                        <li>The contractor agrees to provide the services detailed in the following specifications and attached Technical Addendum.</li>
+                        
+                        <li>A maintenance invoice will be supplied to the client at the end of each month that work is completed.</li>
+                        <li>The client agrees to pay the charges specified in this contract. All contracted services are paid forward.</li>
+                    </ol>
+                </div>
+
+               ${isFields ? `<div>${fieldsHTML}</div>` : ""}
+
+                <div class="maintenance-options">
+                    <!-- This div will be populated by renderMaintenanceSection -->
+                </div>
+
+                <div class="cost-outline">
+                    <h3>Cost Outline</h3>
+                    ${generateCostTable(scopeOfWork, isVendor)}
+                </div>
+
+                <div class="additional-terms no-break">
+                    <p>All prices may be subject to tax as set forth as a separate line item in the applicable invoice.</p>
+                    
+                    <h3>VII. Indemnification</h3>
+                    <p>The Client shall indemnify, defend and hold harmless the contractor, its owners, employees and subcontractors from and against any and all claims, damages, reasonable attorneys' fees, costs and expenses which the contractor incurs as a result of a claim or claims brought by the owner or any third party, arising out of any wrongdoing, negligence and/or breach of contract by the owner alleged or otherwise, or any Act of God, including but not limited to; extraordinary weather conditions, that is related, in any manner whatsoever, to the premises or the owner's involvement with the premises or the services, including but not limited to personal injuries resulting from slip and fall accidents.</p>
+                    
+                    <h3>VIII. Additional Information</h3>
+                    <p>Olio Group reserves the right to suspend service when payments become more than 10 days past due. If service is suspended due to non-payment, the Client agrees to pay any outstanding balance, including any fees or expenses incurred by Olio Group as a result of the suspension, before service is resumed.</p>
+                    
+                    <p>The Client agrees that during the term of this Agreement and for a period of one (1) year following its termination or expiration, the Client shall not directly or indirectly engage, hire, or otherwise contract with any vendor, subcontractor, or service provider that has been introduced to the Client by the Olio Group for the purpose of providing services similar to those provided under this Agreement, without the prior written consent of the Olio Group. In the event that the Client violates this clause, the Client agrees to pay the Olio Group a fee equal to 25% of the total fees paid to the vendor for any services performed by such vendor for the Client. This fee is intended as a reasonable estimation of damages and not as a penalty.</p>
+                    
+                    <p>The price for services under this Agreement has been negotiated and agreed upon based on the scope of work as it exists on the Agreement date. If the Client adds additional areas that require landscape services, Olio Group shall not be responsible for the care or maintenance of such additional areas without a written change order. The change order shall specify the scope of work, the time frame for completion, and the additional fees, if any, for the new work.</p>
+                    
+                    <p>Olio Group shall have the right to decline any requested additional work, and shall not be liable for any damages or losses resulting from the failure to perform such work. If Olio Group agrees to perform additional work, the Client shall pay the fees associated with such work in accordance with the terms of this Agreement.</p>
+                    
+                    <p>A service charge of $30.00 will be charged for any returned check.</p>
+                    
+                    <p>If this Agreement is a "monthly inclusive" contract, meaning that the fees for the Services are bundled together and charged as a single monthly payment, and if the Client decides to cancel the Agreement before the end of the initial term, then the Client shall owe an additional Monthly Inclusive payment as a cancellation fee.</p>
+                    
+                    <p>The cancellation fee shall be equal to the Monthly Inclusive payment that would have been due for the month in which the Agreement was terminated. The Client shall pay the cancellation fee within 30 days of the termination of the Agreement.</p>
+                    
+                    <p>The parties agree that the cancellation fee is a reasonable estimate of the damages that the Contractor would suffer as a result of early termination of the Agreement. The cancellation fee is not a penalty but rather a reasonable pre-estimate of the Contractor's actual damages.</p>
+                    
+                    <p>Client will be responsible for all costs of collection, including without limitation, Court costs and reasonable attorneys fee's in the event that it becomes necessary for Olio Group to resort to legal measures to collect any amount owed under this agreement.</p>
+                    
+                    <p>If the Customer requests and approves the Contractor to perform work at a designated location, and the Contractor arrives at the location at the agreed-upon time but finds that the work has already been completed, the Customer shall pay a trip charge fee of $100.</p>
+                    
+                    <p>The trip charge fee is a reasonable estimate of the Contractor's costs and expenses associated with traveling to the designated location and preparing to perform the work, even if the work was not ultimately performed. The Customer agrees that the trip charge fee is a reasonable estimate of the Contractor's actual damages resulting from the Customer's failure to notify the Contractor that the work had already been completed.</p>
+                    
+                    <p>The Customer shall pay the trip charge fee within 30 days of receipt of an invoice for such fee. Failure to pay the trip charge fee within 30 days of receipt of the invoice shall entitle the Contractor to charge interest on the outstanding amount at the rate of 1.5% per month, or the maximum rate permitted by law, whichever is less.</p>
+                    
+                    <p>This provision shall survive the termination or expiration of this Agreement.</p>
+                    
+                    <h3>Considerations for Insurance, Licenses, Permits and Liability</h3>
+                    <p>Olio Group will carry liability insurance as required by law and provide proof of same to the client on request. Olio Group will carry any licenses required by law and pull appropriate permits for work that require it.</p>
+                    
+                    <h4>Situations which the Contractor may deem are not their responsibility:</h4>
+                    <ol>
+                        <li>Death or decline of plant materials due to improper selection, placement, planting or maintenance done before the time of this contract.</li>
+                        <li>Damage due to improper irrigation, components existing at the time of contract execution.</li>
+                        <li>Exposed cables/wires or sprinkler components/lines normally found below the lawn's surface.</li>
+                        <li>Flooding, storm, wind, fire or cold damages.</li>
+                        <li>Disease or damage to lawns or landscape plants caused by excessive irrigation or lack of water due to inoperative irrigation components provided he/she reported these to client, or irrigation restrictions imposed by the Water Management District or civil authorities.</li>
+                        <li>Damage caused by or to any item hidden in the landscape and not clearly guarded or marked.</li>
+                        <li>Damage due to vandalism.</li>
+                    </ol>
+                </div>
+                <div id="Propoerty Infomation"
+                <p>Property Information</p> 
+                <p>Address: ${dealData.Site_Street || ""}</p>
+                <p>City: ${dealData.Site_City || ""}</p>
+                <p>State: ${dealData.Site_State || ""}</p>
+                <p>Zip: ${dealData.Site_Zip || ""}</p>
+                <p>Olio Group Account Manager: ${salesAssociate.users ? salesAssociate.users[0]?.full_name : ""}</p>
+                <p>Phone: ${salesAssociate.users ? salesAssociate.users[0]?.phone : "6128886525"}</p>
+                <p>Email: ${salesAssociate.users ? salesAssociate.users[0]?.email : ""}</p>
+                </div>
+                
+                <div class="contract-dates">
+                    <h3>X. Billing Procedures & Payment Policy</h3>
+                    <p>Olio Group will invoice client on a monthly basis for services performed. All services specified in the pricing breakdown above will be billed on the last day of the month that the service is provided.</p>
+                    
+                    <p>Unless otherwise specified in writing by the parties, all payments under this Agreement shall be due and payable within 30 days of the delivery of an invoice.</p>
+                    
+                    <p>The Contractor shall deliver invoices to the Customer at the address specified in this Agreement or such other address as the Customer may designate in writing.</p>
+                    
+                    <p>If the Customer disputes any portion of an invoice, the Customer shall provide written notice of the disputed amount to the Contractor within 15 days of the delivery of the invoice. The parties shall work in good faith to resolve any disputes within 30 days of receipt of the written notice of dispute.</p>
+                    
+                    <p>If the Customer fails to pay any amounts due under this Agreement within 30 days of the delivery of an invoice, then the Contractor may, without prejudice to any other rights or remedies it may have, suspend the provision of the Services until all outstanding amounts are paid in full.</p>
+                    
+                    <p>The Contractor may charge interest on any late payments at the rate of 1.5% per month, or the maximum rate permitted by law, whichever is less.</p>
+                    
+                    <p>All payments shall be made in the currency specified in this Agreement.</p>
+                    
+                    <h4>ADDITIONAL SERVICES:</h4>
+                    <p>Any additional or unscheduled services agreed on by client and contractor will be billed on the last day of the month that the service was provided. The charges will be added to clients' monthly statement following service.</p>
+                    
+                    <p>Olio Group accepts the following methods of payment:</p>
+                    <ol>
+                        <li>Personal and Business Checks</li>
+                        <li>ACH Payments</li>
+                    </ol>
+                    
+                    <p><strong>I HAVE FULLY READ THE ABOVE TERMS AND CONDITIONS OF THIS CONTRACT AND AGREE TO BE BOUND BY THEM.</strong></p>
+
+                    <p>Work will begin on: ${formatDate(dealData.Contract_Start_Date)}</p>
+                    <p>Work will end on: ${formatDate(dealData.Contract_End_Date)}</p>
+                </div>
+                <div id="contract-addendum">
+                    <h3>Contract Addendums:</h3>
+                    ${
+                      dealData.Client_Addendum_Rich ?
+                        `
+                        <div class="addendum-section">
+                            <p>${dealData.Client_Addendum_Rich}</p>
+                        </div>
+                    `
+                      : ``
+                    }
+                </div>
+               
+                <div class="signature-section">
+                    <p>Client Signature: <span id="sign-fill" class="field-box">____________________</span></p>
+                    <p>Date: <span id="date-fill" class="field-box">____________________</span></p>
+                </div>
+            `;
+      }
+
+      function generateVendorContract(dealData, isVendor = false) {
+        // Format address
+        const address = `${dealData.Site_Street || ""}, ${dealData.Site_City || ""}, ${dealData.Site_State || ""}, ${dealData.Site_Zip || ""}`;
+        console.log("dealData", dealData);
+        return `
+            <img src="/widgets/create-contract-pdf/logo.png" id="OlioLogo" alt="Olio-logo" class="logo" onerror="this.style.display='none'">
+
+            <div class="vendor-contract-header">
+            <div>This contract is an agreement between Olio Group, which will be referred to as the Client and ${dealData.Vendor?.name || " BLANK "} who will be referred to as the Contractor.
+            </div>
+                <div class="vendor-contract-header">
+                    <h2 style="text-align: center;">VENDOR SERVICE AGREEMENT</h2>
+                    <p class="contract-date">Date: ${new Date().toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}</p>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin: 20px 0; line-height: 1.4;">
+                    <div>
+                        <p style="margin: 0;"><strong>Service Address:</strong></p>
+                        <p style="margin: 15px 0 0 0;">${address}</p>
+                    </div>
+                    <div style="text-align: left;">
+                        <p><strong>Site Name: ${dealData.Company_Name?.name || " Fill IN "}</strong></p>
+                        <p><strong>Location Name: </strong><span style="margin: 10px 0 0 0;">${dealData.Location_Name || " Fill IN "}</span></p>
+                    </div>
+                </div>
+                <h3 style="text-align: left; margin: 20px 0;">Pricing Breakdown</h3>
+                
+                 ${generateCostTable(scopeOfWork, isVendor)}
+                 
+                 <div class="maintenance-options">
+                    <!-- This div will be populated by renderMaintenanceSection -->
+                </div>
+
+                 <h3>Additional Contractor Responsibilities:</h3>
+
+                <p>Contractor to provide equipment, labor, fuel and any other materials necessary to complete the required work per the 
+                contracted specifications and frequency. This can include commercial lot sweepers, blowers, hand held tools, etc. The 
+                contractor will clean all areas up to a safe distance from curbs, barriers or paved shoulder edges. No sweeping services 
+                shall be performed when there are climatic conditions present that would make such an operation ineffective or 
+                dangerous. Contractor's service is based on removal of day-to-day build up of material and debris. Any excessive, out of 
+                the ordinary, build up or residue of any dirt, debris or material is not covered by the standard pricing provided unless 
+                stated otherwise in the contract addendum.</p>
+
+                
+                <ol type="a">
+                    <li>If this service requires snow and ice management, the Contractor shall be responsible to survey the site prior to the
+                    beginning of the season, and submit a report of any pre-existing conditions. Additionally, Contractor shall survey the site
+                    in Spring and perform repairs as necessary. (The Contractor shall be held responsible for the cost of repairs or
+                    replacements of any kind whatsoever necessitated by damage caused by Contractor, including, but not limited to,
+                    damage of curbs, landscaping, or concrete parking blocks).</li>
+                    <li>If this service requires snow and ice management, the Contractor is responsible for "staking" the property using poly
+                    or fiberglass stake/marker (As needed). No wire flags allowed due to vehicle tire liability.</li>
+                    <li>If this service requires snow and ice management, the Contractor shall notify Olio Group and Outdoors if snow
+                    piles may need to be hauled or relocated. Any hauling of snow off premises must be approved by Olio Group and
+                    Outdoors prior to any service.</li>
+                    <li>The Contractor accepts the conditions and responsibilities outlined within this document, and that this document is
+                    in addition to the Independent Contractor Agreement & Independent Contractor Equipment Bid Request forms
+                    submitted to Olio Group and Outdoors.</li>
+                </ol>
+
+                <!-- Insurance Requirement Section -->
+                <div class="insurance-requirement-section">
+                    <h3>Insurance Requirement</h3>
+
+                    <p>
+                        Contractor must list “Olio Landscapes and Outdoors” as an “Additional Insured” on the policy and provide a Certificate of Insurance.
+                        Each Certificate of Insurance shall provide that the insurer must give the General Contractor at least thirty (30) days prior written
+                        notice of cancellation and termination of the Contractor’s coverage thereunder. Not less than two weeks prior to the expiration,
+                        cancellation or termination of any such policy, the Contractor shall supply the Client with a new and replacement Certificate
+                        of Insurance and Additional Insured endorsement as proof of renewal of said original policy. Contractor’s failure to furnish evidence
+                        of these coverages shall not effect Contractor’s remaining obligations. Client reserves the right to reduce future payments by any
+                        amounts assessed to or incurred by the Contractor for insufficient coverage held by Subcontractor.
+                    </p>
+
+                    <p>
+                        Contractor shall obtain insurance with limits at least equal to those specified below -- coverage is required on checked items.
+                    </p>
+
+                    <table class="insurance-table">
+                        <!-- Commercial General Liability -->
+                        <tr class="section-header">
+                            <td>Commercial General Liability</td>
+                            <td colspan="2">ISO form CG 00 01 10 01 edition or its equivalent</td>
+                        </tr>
+                        <tr>
+                            <td>Occurrence Form</td>
+                            <td>Bodily Injury/Property Damage</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Premises/Operations</td>
+                            <td>Each Occurrence</td>
+                            <td>$1,000,000</td>
+                        </tr>
+                        <tr>
+                            <td>Products/Completed Operations</td>
+                            <td>General Aggregate (per project)</td>
+                            <td>$2,000,000</td>
+                        </tr>
+                        <tr>
+                            <td>Contractual Liability</td>
+                            <td>Products Comp/OPS Aggregate</td>
+                            <td>$2,000,000</td>
+                        </tr>
+                        <tr>
+                            <td>Independent Contractors</td>
+                            <td>Personal & Advertising Injury</td>
+                            <td>$1,000,000</td>
+                        </tr>
+                        <tr>
+                            <td>Explosion/Collapse/Underground Coverage (XCU)</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>General Aggregate applies per Project</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+
+                        <!-- Automobile -->
+                        <tr class="section-header">
+                            <td>Automobile</td>
+                            <td colspan="2">ISO form CA 00 01 10 01 edition or its equivalent</td>
+                        </tr>
+                        <tr>
+                            <td>Any Automobile</td>
+                            <td>Bodily Injury/Property Damage (CSL)</td>
+                            <td>$1,000,000</td>
+                        </tr>
+                        <tr>
+                            <td>Hired Automobiles</td>
+                            <td>MCS 90 (if required)</td>
+                            <td>limits required by law</td>
+                        </tr>
+                        <tr>
+                            <td>Non-Owned Automobiles</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+
+                        <!-- Umbrella Liability -->
+                        <tr class="section-header">
+                            <td>Umbrella Liability</td>
+                            <td colspan="2"></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Each Occurrence</td>
+                            <td>$1,000,000</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Aggregate</td>
+                            <td>$1,000,000</td>
+                        </tr>
+
+                        <!-- Worker’s Compensation -->
+                        <tr class="section-header">
+                            <td>Worker’s Compensation and Employers Liability</td>
+                            <td colspan="2"></td>
+                        </tr>
+                        <tr>
+                            <td>Must extend to every Employee, including Owners</td>
+                            <td>Coverage “A”</td>
+                            <td>Statutory</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                Coverage “B” <br>
+                                Each Accident <br>
+                                Disease – Policy Limit <br>
+                                Disease – Each Employee
+                            </td>
+                            <td>
+                                <br>
+                                $100,000<br>
+                                $500,000<br>
+                                $100,000
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>No Compete No Solicitation Agreement</h3>
+                <p>This contract will serve as a Non-Compete Agreement on Contractor referred projects.</p>
+                <p>Olio Group and Outdoors referred to as the Client and Contractor as stated at the beginning of this Agreement,
+                hereby agree that the terms and conditions of this Contractor agreement which shall apply whenever Contractor provides
+                services to Client. The Contractor hereby agrees that during the course of the Agreement and for a period of 12 months
+                immediately following the expiration or termination of the Agreement for any reason, whether with or without good
+                cause or for any or no cause, at the option either the Client or the Contractor, with or without notice, the Contractor will
+                not attempt to directly compete with the Client and its successors and assigns for business that Client is already actively
+                engaged or pursuing, without the prior written consent of the Client. Contractor agrees to not solicit the same or similar
+                business from entities that Client is actively working with for a period of 12 months immediately following the expiration
+                or termination of the Agreement.</p>
+
+                <h3>MUTUAL UNDERSTANDING OF THE PARTIES AND RESPONSIBILITIES</h3>
+                <ol>
+                    <li>The Contractor shall provide the personnel, materials (if agreed upon in the job contract) and equipment necessary
+                    to perform all of the services, and shall not delegate or subcontract the work to another Contractor without the written
+                    approval of an authorized Contractor representative.</li>
+                    <!-- ... continuing with sections 1.2 through 1.11 ... -->
+                </ol>
+
+                <h3>Payment Terms:</h3>
+                <ol type="a">
+                    <li style="text-align: left; padding-bottom:2px;">All services performed by the Contractor need to be line itemed with service dates in a single invoice at the conclusion
+                    of the month's service.</li>
+                    <li style="text-align: left; padding-bottom:2px;">There is to be one invoice per location. All invoices are to be uploaded to the vendor portal located at
+                    OlioGroupMN.com.</li>
+                    <!-- ... continuing with remaining payment terms ... -->
+                    <li style="text-align: left; padding-bottom:2px;">Default payment terms are Net 45, from the last day of the service month.</li>
+                    <li style="text-align: left; padding-bottom:2px;">INVOICES MUST BE SUBMITTED WITHIN 5 DAYS OF THE PRIOR MONTH END TO BE PAID NET 45.</li>
+                    <li style="text-align: left; padding-bottom:2px;">If invoice is received later than 5 days after the month end, invoice will be paid on the next billing cycle, which could result in an additional 30 day delay. </li>
+                </ol>
+
+            ${
+              !dealData.Name.toLowerCase().includes("ots") &&
+              `<h4>Late Invoice Policy:</h4>
+                <p>Please see below invoice deductions for bills submitted after the 5th of the month:</p>
+                <div style="text-align: left;">
+                  <ol>
+                    <li>1st late invoice: Contract on notice</li>
+                    <li>2nd late invoice: 5% Late Fee</li>
+                    <li>3rd late invoice: 5% Late Fee - last chance</li>
+                    <li>4th late invoice: Olio will consider terminating the contract if immediate corrections are not made</li>
+                  </ol>
+                </div>`
+            }
+
+
+                <p><strong>Cancellation:</strong> Olio may terminate this contract without cause at any time upon notice to Contractor.</p>
+                
+                <p><strong>Addendum:</strong> Any attached addendum will take presedence over any and all terms listed above. By signing below you also
+                agree to acknowledging receipt of this contract and addendum.</p>
+
+                <p><strong>I HAVE FULLY READ THE ABOVE TERMS AND CONDITIONS OF THIS CONTRACT AND AGREE TO BE BOUND BY
+                THEM.</strong></p>
+
+                 <p>Work will begin on: ${formatDate(dealData.Contract_Start_Date)}</p>
+                    <p>Work will end on: ${formatDate(dealData.Contract_End_Date)}</p>
+
+                <div id="contract-addendum">
+                    <h3>Contract Addendums:</h3>
+                    ${
+                      dealData.Vendor_Addendum_Rich ?
+                        `
+                        <div class="addendum-section">
+                            <p>${dealData.Vendor_Addendum_Rich}</p>
+                        </div>
+                    `
+                      : ``
+                    }
+                </div>
+
+                <div class="signature-section">
+                    <p>Contractor Signature: <span id="ven-sign-fill" class="field-box">____________________</span></p>
+                    <p>Date: <span id="ven-date-fill" class="field-box">____________________</span></p>
+                </div>
+
+                <div class="insurance-section" style="text-align: left;">
+                <h3>Subcontractor Insurance Addendum</h3>
+
+                <h4>Exhibit A. Insurance Addendum</h4>
+                <ol class="addendum-list">
+                    <li><strong>Additional Insured:</strong> Subcontractor shall name Olio Group and the respective client as additional insured.</li>
+                    <li><strong>Additional Insured endorsements:</strong> AI for ongoing operations on ISO CG 20 10 or equivalent. Additional Insured for completed operations on ISO CG 20 37 or equivalent. Copies of these endorsements are required.</li>
+                    <li><strong>Primary and Noncontributory:</strong> Coverage for Additional Insureds is primary and noncontributory to any insurance carried by those parties.</li>
+                    <li><strong>Waiver of Subrogation:</strong> Waiver of subrogation applies in favor of Olio Group and its clients on General Liability, Automobile Liability, and Workers Compensation where permitted by law.</li>
+                    <li><strong>Limits and completed ops:</strong> Commercial General Liability limits shall be not less than $1,000,000 each occurrence, $2,000,000 general aggregate, and $2,000,000 products and completed operations aggregate.<br> Automobile Liability limits shall be not less than $1,000,000. <br> Workers Compensation coverage limits shall be not less than $1,000,000 where permitted by law. <br>Products and completed operations shall be maintained for at least 2 years after completion of the work. General aggregate applies per project.</li>
+                    <li><strong>Certificates and endorsements:</strong> Before any mobilization, Subcontractor shall provide a certificate of insurance and copies of the AI, Primary and Noncontributory, and Waiver of Subrogation endorsements. Renewal certificates and endorsements are due at least 10 days before expiration. Olio Group may suspend work assignment and withhold payment for any period in which required insurance is expired or non-compliant.</li>
+                    <li><strong>Flow down:</strong> Subcontractor shall require all lower tier subs to maintain insurance and indemnity obligations no less stringent than those required here. Proof will be provided to Olio Group on request.</li>
+                </ol>
+
+                <h4>Exhibit B. Indemnification</h4>
+                <p>
+                    To the fullest extent permitted by law, Subcontractor shall indemnify, defend, and hold harmless Olio Group and its clients, 
+                    and their officers, directors, employees, and agents, from and against all claims, damages, losses, liabilities, and expenses, 
+                    including reasonable attorneys’ fees, arising out of or resulting from the work, to the extent caused in whole or in part by 
+                    the acts or omissions of Subcontractor or anyone employed by or working under Subcontractor. This clause does not require 
+                    Subcontractor to indemnify any party for that party’s sole negligence or willful misconduct where prohibited by law.
+                </p>
+                </div>
+            `;
+      }
+
+      async function generateMaintenanceSection(scopeOfWork) {
+        try {
+          let maintenanceHTMLArray = [];
+
+          for (const id of description_array) {
+            const response = await ZOHO.CRM.API.getRecord({ Entity: "Products", RecordID: id });
+            console.log("Product API response:", response);
+
+            if (response && response.data && response.data[0]) {
+              const productData = response.data[0];
+              const description = productData.Description || "";
+              const Product_Name = productData.Product_Name || "Unnamed Product";
+              const Product_Category = productData.Product_Category || "";
+
+              // Skip products with no description
+              if (!description) {
+                console.log(`Skipping product ${Product_Name} due to missing description`);
+                continue;
+              }
+
+              // Format the description with proper HTML structure
+              const formattedDescription = description
+                .split("\n")
+                .map((line) => {
+                  if (line.trim().startsWith("•") || line.trim().startsWith("-")) {
+                    return `<li>${line.trim().substring(1).trim()}</li>`;
+                  } else if (/^\d+[\.\)]/.test(line.trim())) {
+                    return `<li>${line.trim().substring(line.trim().indexOf(" ") + 1)}</li>`;
+                  }
+                  return `<p>${line.trim()}</p>`;
+                })
+                .join("");
+
+              // Create the HTML structure for each product
+              maintenanceHTMLArray.push(`
+                    <div class="maintenance-option no-break" style="text-align: left;">
+                        <h4 style="text-align: left;">${Product_Name || ""}</h4>
+                        <div class="description-content" style="text-align: left;">
+                            ${
+                              formattedDescription.includes("<li>") ?
+                                `<ul>${formattedDescription}</ul>`
+                              : formattedDescription
+                            }
+                        </div>
+                    </div>
+                `);
+            } else {
+              console.log(`No data found for product ID: ${id}`);
+            }
+          }
+
+          // Return the complete HTML structure with left alignment
+          return `
+            <h3 style="text-align: left;">Property Maintenance Options</h3>
+            ${maintenanceHTMLArray.join("")}
+        `;
+        } catch (error) {
+          console.error("Error in generateMaintenanceSection:", error);
+          return `<p style="text-align: left;">Error fetching product details: ${error.message}</p>`;
+        }
+      }
+
+      // Update the renderMaintenanceSection function
+      async function renderMaintenanceSection(scopeOfWork) {
+        const maintenanceOptionsDiv = document.querySelector(".maintenance-options");
+        if (maintenanceOptionsDiv) {
+          const maintenanceHTML = await generateMaintenanceSection(scopeOfWork);
+          maintenanceOptionsDiv.innerHTML = maintenanceHTML;
+        } else {
+          console.error("Maintenance options div not found");
+        }
+      }
+
+      // Function to limit the description to a certain number of words
+      function truncateDescription(description, wordLimit) {
+        const words = description.split(" ");
+        if (words.length > wordLimit) {
+          return words.slice(0, wordLimit).join(" ");
+        }
+        return description;
+      }
+
+      // Example call to render the maintenance section
+      // Assuming you have some data here
+
+      var description_array = [];
+      function generateCostTable(scopeOfWorkString, isVendor = false) {
+        try {
+          const scopeOfWork = JSON.parse(scopeOfWorkString);
+          console.log("Parsed scopeOfWork:", scopeOfWork);
+
+          if (Array.isArray(scopeOfWork)) {
+            // Set description_array just once
+            description_array = scopeOfWork.map((item) => item.OurServices?.id).filter(Boolean);
+
+            const tableRows = scopeOfWork
+              .map((item) => {
+                const serviceName = item.OurServices ? item.OurServices.name : "Unknown Service";
+                const price = isVendor ? item.Vendor_Price || "0.00" : item.Invoice_Price || "0.00";
+                const billingFrequency = item.Salt_Billing_Frequency_and_Type || "X";
+
+                // Only include number of services for client contract
+                const numberOfServicesCell =
+                  isVendor ? "" : `<td>${item.Number_of_Services || "X"}</td>`;
+
+                return `
+                    <tr>
+                        <td>${serviceName}</td>
+                        <td>$${price}</td>
+                    </tr>
+                `;
+              })
+              .join("");
+
+            // Adjust header based on contract type
+            const numberOfServicesHeader = isVendor ? "" : "<th># of Services</th>";
+
+            return `
+                <table class="pricing-table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>${isVendor ? "Price" : "Cost"}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            `;
+          } else {
+            console.log("Expected an array, but got something else.");
+            return "<p>No valid scope of work data found.</p>";
+          }
+        } catch (error) {
+          console.error("Error parsing the JSON string:", error);
+          return "<p>Error parsing scope of work data.</p>";
+        }
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return "";
+        // Add time component and handle timezone offset
+        const date = new Date(dateString + "T00:00:00");
+        // Force UTC handling to prevent timezone shifts
+        return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toLocaleDateString(
+          "en-US",
+          {
+            month: "numeric",
+            day: "numeric",
+            year: "numeric",
+            timeZone: "UTC", // Force UTC timezone
+          },
+        );
+      }
+
+      function generateScopeOfWorkTable(dealData) {
+        // Get scope of work items from dealData
+        const scopeItems = dealData.scopeOfWork || [];
+
+        if (scopeItems.length === 0) {
+          return `<p>No scope of work available.</p>`;
+        }
+
+        // Get all possible column headers dynamically
+        const columns = Object.keys(scopeItems[0]).filter(
+          (key) => key !== "$in_merge" && key !== "$layout_id" && key !== "$field_states",
+        ); // exclude unnecessary fields
+
+        // Handle nested objects by checking for them and displaying relevant fields (e.g., name in OurServices)
+        const handleNestedData = (data) => {
+          if (data && typeof data === "object") {
+            return data.name || data.module || "N/A"; // For instance, handle OurServices by extracting name
+          }
+          return data || "N/A"; // Default to 'N/A' if the value is null or undefined
+        };
+
+        // Dynamically generate table rows
+        const rows = scopeItems
+          .map((item) => {
+            return `
+            <tr>
+                ${columns
+                  .map((column) => {
+                    // Handle nested objects (e.g., OurServices) and display specific fields like 'name'
+                    return `<td>${handleNestedData(item[column])}</td>`;
+                  })
+                  .join("")}
+            </tr>
+        `;
+          })
+          .join("");
+
+        // Dynamically generate the table header from the columns
+        const tableHeader = columns
+          .map((column) => {
+            const headerName = column
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (char) => char.toUpperCase());
+            return `<th>${headerName}</th>`; // Capitalize first letter of each word
+          })
+          .join("");
+
+        return `
+        <table class="scope-table">
+            <thead>
+                <tr>
+                    ${tableHeader}
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>
+    `;
+      }
+
+      function generatePaymentTable(dealData) {
+        return `
+                <table class="payment-table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Rate</th>
+                            <th>Billing Frequency</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${(dealData.products || [])
+                          .map(
+                            (product) => `
+                            <tr>
+                                <td>${product.Name || ""}</td>
+                                <td>$${product.Unit_Price || "0.00"}</td>
+                                <td>${product.Billing_Frequency || "Monthly"}</td>
+                            </tr>
+                        `,
+                          )
+                          .join("")}
+                    </tbody>
+                </table>
+            `;
+      }
+
+      function switchTab(tabName) {
+        const tabs = document.getElementsByClassName("tab-content");
+        const buttons = document.getElementsByClassName("tab-button");
+
+        for (let tab of tabs) {
+          tab.classList.remove("active");
+        }
+
+        for (let button of buttons) {
+          button.classList.remove("active");
+        }
+
+        document.getElementById(`${tabName}-tab`).classList.add("active");
+        document.querySelector(`button[onclick="switchTab('${tabName}')"]`).classList.add("active");
+      }
+
+      const loadPDFAndExtract = async (pdfBlob, searchString) => {
+        const loadingTask = pdfjsLib.getDocument({ data: await pdfBlob.arrayBuffer() });
+        const pdfDoc = await loadingTask.promise;
+        const results = [];
+
+        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+          const page = await pdfDoc.getPage(pageNum);
+          const content = await page.getTextContent();
+          const items = content.items;
+          const viewport = page.getViewport({ scale: 1 });
+          const pageHeight = viewport.height;
+
+          for (let i = 0; i < items.length; i++) {
+            const text = items[i].str;
+            if (text.toLowerCase().includes(searchString.toLowerCase())) {
+              const transform = items[i].transform;
+
+              const x = transform[4];
+              const y = pageHeight - transform[5];
+              const width = items[i].width;
+              const height = items[i].height;
+              results.push({
+                page: pageNum,
+                text,
+                x,
+                y,
+                width,
+                height,
+              });
+            }
+          }
+        }
+        console.log("Matched fields:", results);
+        return results;
+      };
+
+      function prepareSignatureSectionsForPdf(rootEl, options = {}) {
+        if (!rootEl) return;
+
+        const signatureSections = rootEl.querySelectorAll(".signature-section");
+        if (!signatureSections.length) return;
+
+        const pageHeightPx = options.pageHeightPx || 1122;
+        const topMarginPx = options.topMarginPx || 40;
+        const bottomMarginPx = options.bottomMarginPx || 80;
+        const minSignatureRoomPx = options.minSignatureRoomPx || 220;
+        const minBufferPx = options.minBufferPx || 24;
+        const usablePageHeight = Math.max(pageHeightPx - topMarginPx - bottomMarginPx, 1);
+
+        signatureSections.forEach((section) => {
+          section.classList.remove("signature-safe-page-break");
+
+          const sectionTop = section.offsetTop;
+          const sectionHeight = Math.max(section.offsetHeight, minSignatureRoomPx);
+          const relativeTop = Math.max(sectionTop - topMarginPx, 0);
+          const usedOnPage = relativeTop % usablePageHeight;
+          const remainingOnPage = usablePageHeight - usedOnPage;
+
+          if (remainingOnPage < sectionHeight + minBufferPx) {
+            section.classList.add("signature-safe-page-break");
+          }
+        });
+      }
+
+      async function sendZohoSign(contractType) {
+        const { jsPDF } = window.jspdf;
+        const content = document.getElementById(`${contractType.toLowerCase()}-contract`);
+
+        let recipientName = "";
+        let recipientEmail = "";
+        let isSite = contractType.toLowerCase() === "client";
+        let isVendor = contractType.toLowerCase() === "vendor";
+        let siteEmail, companyEmail;
+        let emailOptions = [];
+        let siteID = ContractData.Site && ContractData.Site.id ? ContractData.Site.id : "";
+        let companyID =
+          ContractData.Company_Name && ContractData.Company_Name.id ?
+            ContractData.Company_Name.id
+          : "";
+        let vendorID = ContractData.Vendor && ContractData.Vendor.id ? ContractData.Vendor.id : "";
+        let siteName = ContractData.Site && ContractData.Site.name ? ContractData.Site.name : "";
+        let vendorName =
+          ContractData.Vendor && ContractData.Vendor.name ? ContractData.Vendor.name : "";
+
+        // Fetch emails for client contract
+        if (isSite) {
+          if (siteID !== "") {
+            let site = await ZOHO.CRM.API.getRecord({ Entity: "Accounts", RecordID: siteID });
+            siteEmail = site?.data[0]?.Email || "";
+          }
+          if (companyID !== "") {
+            let company = await ZOHO.CRM.API.getRecord({ Entity: "Accounts", RecordID: companyID });
+            companyEmail = company?.data[0]?.Email || "";
+          }
+        }
+
+        // Fetch email for vendor contract
+        if (isVendor && vendorID) {
+          let vendor = await ZOHO.CRM.API.getRecord({ Entity: "Vendors", RecordID: vendorID });
+          recipientEmail = vendor?.data[0]?.Email || "";
+          if (vendor?.data[0]?.First_Name && vendor?.data[0]?.Last_Name) {
+            recipientName = `${vendor.data[0].First_Name} ${vendor.data[0].Last_Name}`;
+          } else {
+            recipientName = vendor?.data[0]?.Name || vendor?.data[0]?.Vendor_Name || "";
+          }
+        }
+
+        // siteEmail = "ahmed123@gmail.com";
+        // companyEmail = "ahmed123@gmail.com";
+        if (isSite && !siteEmail && !companyEmail) {
+          const { name, email } = await promptForRecipient(
+            "No Site or Company email found. Please enter recipient's name and email:",
+          );
+          recipientName = name;
+          recipientEmail = email;
+        } else {
+          if (isSite && siteEmail && companyEmail) {
+            emailOptions = [
+              { label: `Site Email (${siteEmail})`, value: "site", email: siteEmail },
+              { label: `Company Email (${companyEmail})`, value: "company", email: companyEmail },
+            ];
+          } else if (companyEmail) {
+            emailOptions = [
+              { label: `Company Email (${companyEmail})`, value: "company", email: companyEmail },
+            ];
+          } else if (siteEmail) {
+            emailOptions = [
+              { label: `Site Email (${siteEmail})`, value: "site", email: siteEmail },
+            ];
+          }
+
+          // Show dropdown if both emails exist
+          if (isSite && emailOptions.length > 1) {
+            let selectedEmail = "";
+            const overlay = document.createElement("div");
+            overlay.className = "loading-overlay";
+            overlay.innerHTML = `
+                    <div style="background: #fff; padding: 32px 40px; border-radius: 14px; box-shadow: 0 8px 32px rgba(33,150,243,0.15); min-width: 340px; max-width: 95vw; text-align: left; position: relative;">
+                        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 18px;">
+                            <svg width="36" height="36" fill="none" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="18" fill="#2196F3" opacity="0.12"/>
+                                <path d="M18 10v8M18 26h.01" stroke="#2196F3" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <h3 style="margin: 0 0 0 12px; font-size: 1.3em; color: #2196F3; font-weight: 600;">Select Email for Zoho Sign</h3>
+                        </div>
+                        <p style="color: #555; margin-bottom: 22px; font-size: 1em;">Please choose which email address to use for sending the contract via Zoho Sign.</p>
+                        <select id="zoho-sign-email-select" style="width:100%;padding:12px 10px;margin-bottom:24px;border:1.5px solid #2196F3;border-radius:6px;font-size:1em;outline:none;transition: border 0.2s;">
+                            ${emailOptions.map((opt) => `<option value="${opt.value}">${opt.label}</option>`).join("")}
+                        </select>
+                        <button id="zoho-sign-email-continue" style="background:linear-gradient(90deg,#2196F3 60%,#21CBF3 100%);color:#fff;padding:12px 28px;border:none;border-radius:6px;cursor:pointer;font-size:1em;font-weight:500;box-shadow:0 2px 8px rgba(33,150,243,0.08);transition: background 0.2s;">
+                            Continue
+                        </button>
+                        <button onclick="document.body.removeChild(this.closest('.loading-overlay'))" style="margin-top:18px;background:none;border:none;color:#888;font-size:0.95em;cursor:pointer;text-decoration:underline;">Cancel</button>
+                    </div>
+                `;
+            document.body.appendChild(overlay);
+
+            await new Promise((resolve) => {
+              overlay.querySelector("#zoho-sign-email-continue").onclick = async () => {
+                const val = overlay.querySelector("#zoho-sign-email-select").value;
+
+                selectedEmail = emailOptions.find((opt) => opt.value === val)?.email || "";
+                document.body.removeChild(overlay);
+
+                if (selectedEmail) {
+                  recipientEmail = selectedEmail;
+                  recipientName = "";
+                }
+                resolve();
+              };
+            });
+          } else if (isSite && emailOptions.length === 1) {
+            if (emailOptions[0].email) {
+              recipientEmail = emailOptions[0].email;
+              recipientName = "";
+            }
+          }
+        }
+
+        // Final confirmation dialog for user to review/change recipient name/email
+        const confirmData = await promptForRecipient(
+          `You are about to send the document to:`,
+          recipientName,
+          recipientEmail,
+          true,
+        );
+        recipientName = confirmData.name;
+        recipientEmail = confirmData.email;
+
+        console.log("Recipient Name:", recipientName);
+        console.log("Recipient Email:", recipientEmail);
+
+        // Show loading overlay
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "loading-overlay";
+        loadingDiv.innerHTML =
+          '<div class="loading-spinner"></div><p>Preparing contract for Zoho Sign...</p>';
+        document.body.appendChild(loadingDiv);
+
+        const today = new Date();
+        const formattedDate = `${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}-${today.getFullYear()}`;
+
+        // Prepare options
+        const margin = [10, 10, 20, 10];
+        const filename =
+          isSite ? `${siteName}-${formattedDate}.pdf` : `${vendorName}-${formattedDate}.pdf`;
+        const a4WidthPx = 793;
+        const a4HeightPx = 1122;
+
+        // Clone the content so we don't affect the real DOM
+        const tempDiv = document.createElement("div");
+        tempDiv.style.position = "absolute";
+        tempDiv.style.left = "-9999px";
+        tempDiv.style.top = "0";
+        tempDiv.style.width = `${a4WidthPx}px`;
+        tempDiv.style.minHeight = `${a4HeightPx}px`;
+        tempDiv.style.visibility = "hidden";
+        const clonedContent = content.cloneNode(true);
+        clonedContent.style.fontFamily = "Arial, sans-serif";
+        clonedContent.style.letterSpacing = "normal";
+        clonedContent.style.wordSpacing = "normal";
+        clonedContent.style.lineHeight = "1.4";
+        clonedContent.style.whiteSpace = "normal";
+        clonedContent.style.overflowWrap = "break-word";
+
+        tempDiv.appendChild(clonedContent);
+        document.body.appendChild(tempDiv);
+        prepareSignatureSectionsForPdf(clonedContent, {
+          pageHeightPx: a4HeightPx,
+          topMarginPx: 40,
+          bottomMarginPx: 80,
+          minSignatureRoomPx: 220,
+        });
+
+        const pdf = new jsPDF({
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait",
+          compress: true,
+          hotfixes: ["px_scaling"],
+        });
+
+        await pdf.html(clonedContent, {
+          html2canvas: {
+            scale: 0.238,
+            useCORS: true,
+            letterRendering: true,
+            scrollY: 0,
+            windowWidth: a4WidthPx,
+            height: a4HeightPx + 1000,
+            removeContainer: true,
+            backgroundColor: "#fff",
+          },
+          margin: margin,
+          autoPaging: "text",
+          x: 0,
+          y: 0,
+          pagebreak: {
+            mode: ["avoid-all", "css", "legacy"],
+            before: ".page-break-before",
+            after: ".page-break-after",
+          },
+        });
+
+        // Convert to blob
+        const blob = pdf.output("blob");
+        const file = new File([blob], filename, { type: "application/pdf" });
+        let fields = await loadPDFAndExtract(blob, "____________________");
+
+        // Upload to Zoho CRM
+        var config = {
+          CONTENT_TYPE: "multipart",
+          PARTS: [
+            {
+              headers: {
+                "Content-Disposition": "file;",
+              },
+              content: "__FILE__",
+            },
+          ],
+          FILE: {
+            fileParam: "content",
+            file: file,
+          },
+        };
+        let userData = await ZOHO.CRM.CONFIG.getCurrentUser().catch(function () {
+          return { users: [] };
+        });
+        let ownerEmail = userData?.users?.[0]?.email || "";
+
+        ZOHO.CRM.API.uploadFile(config)
+          .then(function (data) {
+            if (
+              data &&
+              data.data &&
+              data.data[0] &&
+              data.data[0].details &&
+              data.data[0].details.id
+            ) {
+              var fileId = data.data[0].details.id;
+              var req_data = {
+                arguments: JSON.stringify({
+                  id: ContractData.id,
+                  file_id: fileId,
+                  signature_fields: fields,
+                  recipient_name: recipientName,
+                  recipient_email: recipientEmail,
+                  owner_email: ownerEmail,
+                }),
+              };
+              ZOHO.CRM.FUNCTIONS.execute("sendzohosigncontracts", req_data)
+                .then(function (data) {
+                  if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+                  if (document.body.contains(tempDiv)) document.body.removeChild(tempDiv);
+
+                  showZohoSignResult(data, contractType);
+                })
+                .catch(function (error) {
+                  if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+                  if (document.body.contains(tempDiv)) document.body.removeChild(tempDiv);
+                  showError(
+                    "Zoho Sign Error",
+                    error.message || "An error occurred while sending to Zoho Sign.",
+                  );
+                });
+            } else {
+              if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+              if (document.body.contains(tempDiv)) document.body.removeChild(tempDiv);
+            }
+          })
+          .catch(function (error) {
+            if (document.body.contains(loadingDiv)) document.body.removeChild(loadingDiv);
+            if (document.body.contains(tempDiv)) document.body.removeChild(tempDiv);
+          });
+      }
+
+      // Helper function to prompt for recipient name/email
+      function promptForRecipient(
+        message,
+        defaultName = "",
+        defaultEmail = "",
+        showConfirm = false,
+      ) {
+        return new Promise((resolve) => {
+          const overlay = document.createElement("div");
+          overlay.className = "loading-overlay";
+          overlay.innerHTML = `
+                <div style="background: #fff; padding: 32px 40px; border-radius: 14px; box-shadow: 0 8px 32px rgba(33,150,243,0.15); min-width: 340px; max-width: 95vw; text-align: left; position: relative;">
+                    <h3 style="color: #2196F3; font-weight: 600; margin-bottom: 10px;">Recipient Details</h3>
+                    <p style="color: #555; margin-bottom: 18px; font-size: 1em;">${message}</p>
+                    <input id="recipient-name" type="text" placeholder="Recipient Name" value="${defaultName || ""}" style="width:100%;padding:10px;margin-bottom:12px;border:1.5px solid #2196F3;border-radius:6px;font-size:1em;outline:none;">
+                    <input id="recipient-email" type="email" placeholder="Recipient Email" value="${defaultEmail || ""}" style="width:100%;padding:10px;margin-bottom:18px;border:1.5px solid #2196F3;border-radius:6px;font-size:1em;outline:none;">
+                    <button id="recipient-continue" style="background:linear-gradient(90deg,#2196F3 60%,#21CBF3 100%);color:#fff;padding:12px 28px;border:none;border-radius:6px;cursor:pointer;font-size:1em;font-weight:500;box-shadow:0 2px 8px rgba(33,150,243,0.08);transition: background 0.2s;">
+                        ${showConfirm ? "Confirm & Send" : "Continue"}
+                    </button>
+                    <button onclick="document.body.removeChild(this.closest('.loading-overlay'))" style="margin-top:18px;background:none;border:none;color:#888;font-size:0.95em;cursor:pointer;text-decoration:underline;">Cancel</button>
+                </div>
+            `;
+          document.body.appendChild(overlay);
+
+          overlay.querySelector("#recipient-continue").onclick = () => {
+            const name = overlay.querySelector("#recipient-name").value.trim();
+            const email = overlay.querySelector("#recipient-email").value.trim();
+            if (!name || !email) {
+              overlay.querySelector("#recipient-email").style.borderColor = "#f44336";
+              overlay.querySelector("#recipient-name").style.borderColor = "#f44336";
+              return;
+            }
+            document.body.removeChild(overlay);
+            resolve({ name, email });
+          };
+        });
+      }
+      function showZohoSignResult(res, contractType) {
+        let data;
+        // Parse string to JSON if needed
+        let output = res?.details?.output;
+        if (typeof output === "string") {
+          data = JSON.parse(output);
+        } else {
+          data = output;
+        }
+        console.log(data);
+
+        // Check if the sign request was successfully submitted
+        const submittingStep = data?.steps?.find(
+          (step) => step.step === "Submitting sign request" && step.status === "success",
+        );
+        const isClient = contractType.toLowerCase() === "client";
+        const isVendor = contractType.toLowerCase() === "vendor";
+
+        // If found, proceed to update CRM
+        if (submittingStep) {
+          const request_id = data.steps[1].request_id;
+          if (ContractData && ContractData.id && ContractData.Layout?.display_label === "Vendor") {
+            let apiData = {
+              id: ContractData.id,
+            };
+            if (isVendor) {
+              apiData["Vendor_Signed_Status"] = "Sent";
+              apiData["Vendor_Sign_Req_Id"] = request_id;
+            } else if (isClient) {
+              apiData["Client_Signed_Status"] = "Sent";
+              apiData["Client_Sign_Req_Id"] = request_id;
+            }
+
+            ZOHO.CRM.API.updateRecord({
+              Entity: "Contracts",
+              APIData: apiData,
+            })
+              .then(function (updateRes) {
+                console.log("Vendor field updated in CRM:", updateRes);
+              })
+              .catch(function (err) {
+                console.error("Error updating Vendor field in CRM:", err);
+              });
+          }
+        }
+
+        // Create modal overlay
+        const overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.background = "rgba(0,0,0,0.25)";
+        overlay.style.zIndex = "2000";
+        overlay.style.display = "flex";
+        overlay.style.justifyContent = "center";
+        overlay.style.alignItems = "center";
+
+        // Modal container
+        const container = document.createElement("div");
+        container.style.padding = "24px 32px";
+        container.style.border = "1px solid #2196F3";
+        container.style.borderRadius = "12px";
+        container.style.backgroundColor = "#fff";
+        container.style.minWidth = "340px";
+        container.style.maxWidth = "95vw";
+        container.style.boxShadow = "0 8px 32px rgba(33,150,243,0.15)";
+        container.style.position = "relative";
+        container.style.textAlign = "center";
+
+        // Close button
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "×";
+        closeBtn.title = "Close";
+        closeBtn.style.position = "absolute";
+        closeBtn.style.top = "10px";
+        closeBtn.style.right = "16px";
+        closeBtn.style.background = "none";
+        closeBtn.style.border = "none";
+        closeBtn.style.fontSize = "1.7em";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.style.color = "#2196F3";
+        closeBtn.onclick = () => {
+          if (document.body.contains(overlay)) document.body.removeChild(overlay);
+        };
+        container.appendChild(closeBtn);
+
+        // Title
+        const title = document.createElement("h3");
+        title.textContent = "Zoho Sign Process Summary";
+        title.style.marginBottom = "10px";
+        container.appendChild(title);
+
+        // Steps list
+        const steps = data?.steps || [];
+        const list = document.createElement("ul");
+        list.style.listStyle = "none";
+        list.style.padding = "0";
+        list.style.textAlign = "left";
+
+        steps.forEach((step) => {
+          const li = document.createElement("li");
+          li.style.margin = "6px 0";
+          li.style.display = "flex";
+          li.style.alignItems = "flex-start";
+
+          const statusIcon = document.createElement("span");
+          statusIcon.textContent = step.status === "success" ? "✅" : "❌";
+          statusIcon.style.marginRight = "10px";
+          statusIcon.style.marginTop = "2px";
+
+          const message = document.createElement("span");
+          message.textContent = `${step.step}`;
+
+          li.appendChild(statusIcon);
+          li.appendChild(message);
+
+          // Show error details in a scrollable box if error message is long
+          if (step.status !== "success") {
+            let errorMsg = "";
+            if (step.error && step.error.message) {
+              errorMsg = step.error.message;
+            } else if (step.message) {
+              errorMsg = step.message;
+            } else if (step.error) {
+              errorMsg = typeof step.error === "string" ? step.error : JSON.stringify(step.error);
+            }
+            if (errorMsg) {
+              const errorDetails = document.createElement("div");
+              errorDetails.textContent = ` → ${errorMsg}`;
+              errorDetails.style.color = "red";
+              errorDetails.style.marginLeft = "30px";
+              errorDetails.style.maxWidth = "420px";
+              errorDetails.style.maxHeight = "120px";
+              errorDetails.style.overflowY = "auto";
+              errorDetails.style.background = "#fff4f4";
+              errorDetails.style.border = "1px solid #f44336";
+              errorDetails.style.borderRadius = "6px";
+              errorDetails.style.padding = "8px";
+              errorDetails.style.fontSize = "0.98em";
+              errorDetails.style.whiteSpace = "pre-wrap";
+              li.appendChild(errorDetails);
+            }
+          }
+
+          list.appendChild(li);
+        });
+
+        // Show top-level error if present
+        if (data?.error?.message) {
+          const errorDiv = document.createElement("div");
+          errorDiv.textContent = `Zoho Sign Error: ${data.error.message}`;
+          errorDiv.style.color = "red";
+          errorDiv.style.margin = "12px 0 0 0";
+          errorDiv.style.fontWeight = "bold";
+          errorDiv.style.background = "#fff4f4";
+          errorDiv.style.border = "1px solid #f44336";
+          errorDiv.style.borderRadius = "6px";
+          errorDiv.style.padding = "8px";
+          errorDiv.style.fontSize = "1em";
+          errorDiv.style.whiteSpace = "pre-wrap";
+          list.appendChild(errorDiv);
+        }
+        if (data?.doc_del_message) {
+          const docDelDiv = document.createElement("div");
+          docDelDiv.textContent = `Zoho Sign: ${data.doc_del_message}`;
+          docDelDiv.style.color = "#d32f2f";
+          docDelDiv.style.margin = "8px 0 0 0";
+          docDelDiv.style.fontWeight = "bold";
+          docDelDiv.style.background = "#fff4f4";
+          docDelDiv.style.border = "1px solid #f44336";
+          docDelDiv.style.borderRadius = "6px";
+          docDelDiv.style.padding = "8px";
+          docDelDiv.style.fontSize = "1em";
+          docDelDiv.style.whiteSpace = "pre-wrap";
+          list.appendChild(docDelDiv);
+        }
+
+        container.appendChild(list);
+        overlay.appendChild(container);
+        document.body.appendChild(overlay);
+
+        // Auto-close after 7.5 seconds
+        setTimeout(() => {
+          if (document.body.contains(overlay)) document.body.removeChild(overlay);
+        }, 7500);
+      }
+
+      function generatePDF(contractType) {
+        // Get the contract content
+        const content = document.getElementById(`${contractType}-contract`);
+
+        // PDF options
+        const opt = {
+          margin: [10, 10, 10, 10], // [top, left, bottom, right]
+          filename: `${contractType}_contract_${new Date().getTime()}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            letterRendering: true,
+            scrollY: 0,
+            windowWidth: content.offsetWidth,
+            // windowHeight: content.scrollHeight,
+            removeContainer: true,
+          },
+          jsPDF: {
+            unit: "mm",
+            format: "a4",
+            orientation: "portrait",
+            compress: true,
+            hotfixes: ["px_scaling"],
+          },
+          pagebreak: {
+            mode: ["css", "legacy"],
+            before: ".page-break-before",
+          },
+        };
+
+        // Show loading indicator
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "loading-overlay";
+        loadingDiv.innerHTML = '<div class="loading-spinner"></div><p>Generating PDF...</p>';
+        document.body.appendChild(loadingDiv);
+
+        // Clone the content and prepare it for PDF generation
+        const tempDiv = document.createElement("div");
+        tempDiv.style.position = "absolute";
+        tempDiv.style.left = "-9999px";
+        tempDiv.style.top = "0";
+        tempDiv.style.width = content.offsetWidth + "px";
+        tempDiv.style.minHeight = content.scrollHeight + "px";
+        const clonedContent = content.cloneNode(true);
+        tempDiv.appendChild(clonedContent);
+        document.body.appendChild(tempDiv);
+        prepareSignatureSectionsForPdf(clonedContent, {
+          pageHeightPx: 1122,
+          topMarginPx: 40,
+          bottomMarginPx: 80,
+          minSignatureRoomPx: 220,
+        });
+
+        // Generate PDF
+        html2pdf()
+          .from(tempDiv.firstChild)
+          .set(opt)
+          .save()
+          .then(() => {
+            // Cleanup
+            document.body.removeChild(loadingDiv);
+            document.body.removeChild(tempDiv);
+          })
+          .catch((error) => {
+            console.error("PDF generation failed:", error);
+            alert("Failed to generate PDF. Please try again.");
+            // Cleanup
+            document.body.removeChild(loadingDiv);
+            document.body.removeChild(tempDiv);
+          });
+      }
+
+      function makeContentEditable() {
+        // Find all text elements within the contracts that should be editable
+        const editableElements = document.querySelectorAll(
+          ".contract-content p, .contract-content td, .contract-content li",
+        );
+
+        editableElements.forEach((element) => {
+          // Add contenteditable attribute
+          element.contentEditable = true;
+
+          // Add visual feedback for editable elements
+          element.style.cursor = "text";
+
+          // Add hover effect
+          element.addEventListener("mouseover", function () {
+            this.style.backgroundColor = "#f8f9fa";
+          });
+
+          element.addEventListener("mouseout", function () {
+            this.style.backgroundColor = "";
+          });
+
+          // Add focus effect
+          element.addEventListener("focus", function () {
+            this.style.outline = "2px solid #2196F3";
+            this.style.padding = "2px";
+          });
+
+          element.addEventListener("blur", function () {
+            this.style.outline = "";
+            this.style.padding = "";
+          });
+        });
+
+        // Add CSS for editable elements
+        const style = document.createElement("style");
+        style.textContent = `
+                [contenteditable=true]:hover {
+                    background-color: #f8f9fa;
+                }
+                [contenteditable=true]:focus {
+                    outline: 2px solid #2196F3;
+                    padding: 2px;
+                    background-color: #fff;
+                }
+            `;
+        document.head.appendChild(style);
+
+        // Add edit instructions
+        const instructions = document.createElement("div");
+        instructions.className = "edit-instructions";
+        instructions.innerHTML = `
+                <div style="
+                    background-color: #e3f2fd;
+                    padding: 10px;
+                    margin: 10px 0;
+                    border-radius: 4px;
+                    border-left: 4px solid #2196F3;
+                ">
+                    <p style="margin: 0;"><strong>📝 Edit Mode:</strong> Click on any text to edit. Your changes will be included in the generated PDF.</p>
+                </div>
+            `;
+
+        // Add instructions before each contract
+
+        //document.getElementById('client-tab').insertBefore(instructions.cloneNode(true), document.getElementById('client-contract'));
+        document
+          .getElementById("vendor-tab")
+          .insertBefore(instructions.cloneNode(true), document.getElementById("vendor-contract"));
+      }
+
+      ZOHO.embeddedApp.init();
+    </script>
+  </body>
+</html>

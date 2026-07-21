@@ -8,13 +8,17 @@ import {
   SEND_MESSAGE_BUTTON_LABEL,
   SendMessageWidget,
 } from "@/widgets/send-message";
+import {
+  CREATE_CONTRACT_PDF_BUTTON_LABEL,
+  CreateContractPdfWidget,
+} from "@/widgets/create-contract-pdf";
 
 /** Record-view custom buttons (Zoho-style labels). */
 export const CONTRACT_RECORD_BUTTONS = [
   "Create Service Completion",
   "TestRecordWidget",
   SEND_MESSAGE_BUTTON_LABEL,
-  "Create Contract PDF",
+  CREATE_CONTRACT_PDF_BUTTON_LABEL,
   "Sync With Books",
   "Renew Contract",
   "Status Pending Sales Review",
@@ -43,6 +47,7 @@ export function ContractRecordActions({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [sendMessageOpen, setSendMessageOpen] = useState(false);
+  const [createContractPdfOpen, setCreateContractPdfOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -91,6 +96,12 @@ export function ContractRecordActions({
 
     if (action === SEND_MESSAGE_BUTTON_LABEL) {
       setSendMessageOpen(true);
+      onAction?.(action, recordId);
+      return;
+    }
+
+    if (action === CREATE_CONTRACT_PDF_BUTTON_LABEL) {
+      setCreateContractPdfOpen(true);
       onAction?.(action, recordId);
       return;
     }
@@ -169,6 +180,13 @@ export function ContractRecordActions({
       <SendMessageWidget
         open={sendMessageOpen}
         onClose={() => setSendMessageOpen(false)}
+        selectedRecordIds={[recordId]}
+        module="Contracts"
+      />
+
+      <CreateContractPdfWidget
+        open={createContractPdfOpen}
+        onClose={() => setCreateContractPdfOpen(false)}
         selectedRecordIds={[recordId]}
         module="Contracts"
       />

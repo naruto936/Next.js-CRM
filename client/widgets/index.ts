@@ -1,6 +1,7 @@
 import type { CrmWidgetDefinition } from "@/widgets/types";
 import { ACTIVATE_VENDORS_WIDGET } from "@/widgets/activate-vendors";
 import { ADD_MASS_SUBFORM_WIDGET } from "@/widgets/add-mass-subform";
+import { CREATE_CONTRACT_PDF_WIDGET } from "@/widgets/create-contract-pdf";
 import { CREATE_VENDOR_INVOICE_RECORDS_WIDGET } from "@/widgets/create-vendor-invoice-records";
 import { MASS_RENEWAL_CONTRACTS_WIDGET } from "@/widgets/mass-renewal-contracts";
 import { MISSING_INVOICE_EMAIL_WIDGET } from "@/widgets/missing-invoice-email";
@@ -19,6 +20,7 @@ export const CRM_WIDGETS = [
   MISSING_INVOICE_EMAIL_WIDGET,
   MASS_RENEWAL_CONTRACTS_WIDGET,
   SEND_MESSAGE_WIDGET,
+  CREATE_CONTRACT_PDF_WIDGET,
 ] as const satisfies readonly CrmWidgetDefinition[];
 
 export type CrmWidgetId = (typeof CRM_WIDGETS)[number]["id"];
@@ -62,3 +64,7 @@ export {
   SEND_MESSAGE_WIDGET,
   SendMessageWidget,
 } from "@/widgets/send-message";
+export {
+  CREATE_CONTRACT_PDF_WIDGET,
+  CreateContractPdfWidget,
+} from "@/widgets/create-contract-pdf";
