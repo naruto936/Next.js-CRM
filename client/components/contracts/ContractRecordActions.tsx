@@ -23,6 +23,9 @@ import {
   CLONE_CONTRACT_BUTTON_LABEL,
   CloneContractWidget,
 } from "@/widgets/clone-contract";
+import {
+  MassRenewalContractsWidget,
+} from "@/widgets/mass-renewal-contracts";
 
 /** Record-view custom buttons (Zoho-style labels). */
 export const CONTRACT_RECORD_BUTTONS = [
@@ -44,12 +47,15 @@ export const CONTRACT_RECORD_BUTTONS = [
 
 export type ContractRecordButtonLabel = (typeof CONTRACT_RECORD_BUTTONS)[number];
 
+const RENEW_CONTRACT_BUTTON_LABEL = "Renew Contract" as const;
+
 const CONFIGURED_RECORD_BUTTONS = new Set<string>([
   SEND_MESSAGE_BUTTON_LABEL,
   CREATE_CONTRACT_PDF_BUTTON_LABEL,
   COMPLIANCE_FIELDS_BUTTON_LABEL,
   PO_ADDENDUM_BUTTON_LABEL,
   CLONE_CONTRACT_BUTTON_LABEL,
+  RENEW_CONTRACT_BUTTON_LABEL,
 ]);
 
 type ContractRecordActionsProps = {
@@ -70,6 +76,7 @@ export function ContractRecordActions({
   const [complianceFieldsOpen, setComplianceFieldsOpen] = useState(false);
   const [poAddendumOpen, setPoAddendumOpen] = useState(false);
   const [cloneContractOpen, setCloneContractOpen] = useState(false);
+  const [renewContractOpen, setRenewContractOpen] = useState(false);
   const [inProgressMessage, setInProgressMessage] = useState<string | null>(
     null,
   );
@@ -161,6 +168,12 @@ export function ContractRecordActions({
 
     if (action === CLONE_CONTRACT_BUTTON_LABEL) {
       setCloneContractOpen(true);
+      onAction?.(action, recordId);
+      return;
+    }
+
+    if (action === RENEW_CONTRACT_BUTTON_LABEL) {
+      setRenewContractOpen(true);
       onAction?.(action, recordId);
       return;
     }
@@ -280,6 +293,13 @@ export function ContractRecordActions({
       <CloneContractWidget
         open={cloneContractOpen}
         onClose={() => setCloneContractOpen(false)}
+        selectedRecordIds={[recordId]}
+        module="Contracts"
+      />
+
+      <MassRenewalContractsWidget
+        open={renewContractOpen}
+        onClose={() => setRenewContractOpen(false)}
         selectedRecordIds={[recordId]}
         module="Contracts"
       />

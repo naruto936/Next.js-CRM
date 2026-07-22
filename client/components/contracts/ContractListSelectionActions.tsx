@@ -30,6 +30,8 @@ import {
 } from "@/widgets/olio-mass-update";
 
 /** Menu items — "Renew Contracts" is 2nd-to-last. */
+const RENEW_CONTRACTS_LIST_LABEL = "Renew Contracts" as const;
+
 const RENEW_MENU_ITEMS = [
   "Testing renewal",
   ACTIVATE_VENDORS_BUTTON_LABEL,
@@ -39,7 +41,7 @@ const RENEW_MENU_ITEMS = [
   MISSING_INVOICE_EMAIL_BUTTON_LABEL,
   OLIO_MASS_UPDATE_BUTTON_LABEL,
   ADD_MASS_SUBFORM_BUTTON_LABEL,
-  "Renew Contracts",
+  RENEW_CONTRACTS_LIST_LABEL,
   "Test Olio Mass Update",
 ] as const;
 
@@ -140,7 +142,11 @@ export function ContractListSelectionActions({
       return;
     }
 
-    if (action === MASS_RENEWAL_CONTRACTS_BUTTON_LABEL) {
+    if (
+      action === MASS_RENEWAL_CONTRACTS_BUTTON_LABEL ||
+      action === RENEW_CONTRACTS_LIST_LABEL ||
+      action === "Testing renewal"
+    ) {
       setMassRenewalOpen(true);
       onAction?.(action);
       return;

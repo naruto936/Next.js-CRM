@@ -1,5 +1,5 @@
 /**
- * Mass Renewal Contracts — port of `logic/index.js` Create SOW flow.
+ * Mass Renewal / Renew Contract — port of widget.html + index.js Create SOW flow.
  *
  * For each selected contract:
  * 1) Load contract via Zoho function `getModuleWithIDsAndName`
@@ -27,11 +27,6 @@ function lookupId(value: ZohoLookup): string {
     return String(value.id).trim();
   }
   return "";
-}
-
-function asLookup(value: ZohoLookup): { id: string } | undefined {
-  const id = lookupId(value);
-  return id ? { id } : undefined;
 }
 
 function textValue(value: unknown) {
@@ -135,17 +130,19 @@ function buildScopeOfWork(
 ): Record<string, unknown>[] {
   if (!Array.isArray(subform) || subform.length === 0) return [];
 
+  // Same mapping as index.js (OurServices id + shifted dates).
   return subform.map((item) => {
     const row = (item ?? {}) as Record<string, unknown>;
     const serviceId = lookupId(row.OurServices as ZohoLookup);
     return {
-      ...(serviceId ? { OurServices: { id: serviceId } } : {}),
-      Vendor_Price: row.Vendor_Price ?? "",
-      Invoice_Price: row.Invoice_Price ?? "",
+      // REST expects { id }; Zoho widget SDK accepted bare id string.
+      OurServices: serviceId ? { id: serviceId } : "",
+      Vendor_Price: row.Vendor_Price || "",
+      Invoice_Price: row.Invoice_Price || "",
       Start_Date: addYears(row.Start_Date, yearsExtension),
       End_Date: addYears(row.End_Date, yearsExtension),
-      Number_of_Services: row.Number_of_Services ?? "",
-      Number_of_Services_Completed: row.Number_of_Services_Completed ?? "",
+      Number_of_Services: row.Number_of_Services || "",
+      Number_of_Services_Completed: row.Number_of_Services_Completed || "",
     };
   });
 }
@@ -166,16 +163,20 @@ function buildSowMap(
     form.yearsExtension,
   );
 
-  const companyName = asLookup(contractData.Site as ZohoLookup);
-  const accountName = asLookup(contractData.Company_Name as ZohoLookup);
-  const salesAssociate = asLookup(contractData.Sales_Associate as ZohoLookup);
-  const opsAssociate = asLookup(
+  const siteId = lookupId(contractData.Site as ZohoLookup);
+  const companyId = lookupId(contractData.Company_Name as ZohoLookup);
+  const salesAssociateId = lookupId(
+    contractData.Sales_Associate as ZohoLookup,
+  );
+  const salesManagerId = lookupId(contractData.Sales_Manager as ZohoLookup);
+  const opsAssociateId = lookupId(
     contractData.Operations_Associate as ZohoLookup,
   );
-  // Sales_Owner / Ops_Owner are filtered userlookups on Deals — mapping
-  // Contract Sales_Manager / Operations_Manager often fails with
-  // FILTER_CRITERIA_NOT_SATISFIED. Associates do not have that filter.
+  const opsManagerId = lookupId(
+    contractData.Operations_Manager as ZohoLookup,
+  );
 
+  // Field map mirrors index.js sowMap exactly (REST uses { id } for lookups).
   const sowMap: Record<string, unknown> = {
     Deal_Name: "tempRec",
     Pipeline: "Scope of Work",
@@ -217,10 +218,17 @@ function buildSowMap(
     End_Date: addYears(contractData.Contract_End_Date, form.yearsExtension),
   };
 
-  if (companyName) sowMap.Company_Name = companyName;
-  if (accountName) sowMap.Account_Name = accountName;
-  if (salesAssociate) sowMap.Sales_Associate_New = salesAssociate;
-  if (opsAssociate) sowMap.Operations_Associate_New = opsAssociate;
+  // index.js: Company_Name ← Site, Account_Name ← Company_Name
+  if (siteId) sowMap.Company_Name = { id: siteId };
+  if (companyId) sowMap.Account_Name = { id: companyId };
+
+  // index.js sales / ops mappings
+  if (salesAssociateId) sowMap.Sales_Associate_New = { id: salesAssociateId };
+  if (salesManagerId) sowMap.Sales_Owner = { id: salesManagerId };
+  if (opsAssociateId) {
+    sowMap.Operations_Associate_New = { id: opsAssociateId };
+  }
+  if (opsManagerId) sowMap.Ops_Owner = { id: opsManagerId };
 
   return sowMap;
 }
