@@ -9,6 +9,7 @@ import { MISSING_INVOICE_EMAIL_WIDGET } from "@/widgets/missing-invoice-email";
 import { OLIO_MASS_UPDATE_WIDGET } from "@/widgets/olio-mass-update";
 import { PO_ADDENDUM_WIDGET } from "@/widgets/po-addendum";
 import { SEND_MESSAGE_WIDGET } from "@/widgets/send-message";
+import { CLONE_CONTRACT_WIDGET } from "@/widgets/clone-contract";
 
 /**
  * Registry of list-action widgets.
@@ -25,6 +26,7 @@ export const CRM_WIDGETS = [
   CREATE_CONTRACT_PDF_WIDGET,
   COMPLIANCE_FIELDS_WIDGET,
   PO_ADDENDUM_WIDGET,
+  CLONE_CONTRACT_WIDGET,
 ] as const satisfies readonly CrmWidgetDefinition[];
 
 export type CrmWidgetId = (typeof CRM_WIDGETS)[number]["id"];
@@ -80,3 +82,7 @@ export {
   PO_ADDENDUM_WIDGET,
   PoAddendumWidget,
 } from "@/widgets/po-addendum";
+export {
+  CLONE_CONTRACT_WIDGET,
+  CloneContractWidget,
+} from "@/widgets/clone-contract";

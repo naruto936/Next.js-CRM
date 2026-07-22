@@ -19,6 +19,10 @@ import {
   PO_ADDENDUM_BUTTON_LABEL,
   PoAddendumWidget,
 } from "@/widgets/po-addendum";
+import {
+  CLONE_CONTRACT_BUTTON_LABEL,
+  CloneContractWidget,
+} from "@/widgets/clone-contract";
 
 /** Record-view custom buttons (Zoho-style labels). */
 export const CONTRACT_RECORD_BUTTONS = [
@@ -35,7 +39,7 @@ export const CONTRACT_RECORD_BUTTONS = [
   PO_ADDENDUM_BUTTON_LABEL,
   "Status Client Negotiations",
   "Status Vendor Compliance",
-  "Clone Contract",
+  CLONE_CONTRACT_BUTTON_LABEL,
 ] as const;
 
 export type ContractRecordButtonLabel = (typeof CONTRACT_RECORD_BUTTONS)[number];
@@ -45,6 +49,7 @@ const CONFIGURED_RECORD_BUTTONS = new Set<string>([
   CREATE_CONTRACT_PDF_BUTTON_LABEL,
   COMPLIANCE_FIELDS_BUTTON_LABEL,
   PO_ADDENDUM_BUTTON_LABEL,
+  CLONE_CONTRACT_BUTTON_LABEL,
 ]);
 
 type ContractRecordActionsProps = {
@@ -64,6 +69,7 @@ export function ContractRecordActions({
   const [createContractPdfOpen, setCreateContractPdfOpen] = useState(false);
   const [complianceFieldsOpen, setComplianceFieldsOpen] = useState(false);
   const [poAddendumOpen, setPoAddendumOpen] = useState(false);
+  const [cloneContractOpen, setCloneContractOpen] = useState(false);
   const [inProgressMessage, setInProgressMessage] = useState<string | null>(
     null,
   );
@@ -149,6 +155,12 @@ export function ContractRecordActions({
 
     if (action === PO_ADDENDUM_BUTTON_LABEL) {
       setPoAddendumOpen(true);
+      onAction?.(action, recordId);
+      return;
+    }
+
+    if (action === CLONE_CONTRACT_BUTTON_LABEL) {
+      setCloneContractOpen(true);
       onAction?.(action, recordId);
       return;
     }
@@ -261,6 +273,13 @@ export function ContractRecordActions({
       <PoAddendumWidget
         open={poAddendumOpen}
         onClose={() => setPoAddendumOpen(false)}
+        selectedRecordIds={[recordId]}
+        module="Contracts"
+      />
+
+      <CloneContractWidget
+        open={cloneContractOpen}
+        onClose={() => setCloneContractOpen(false)}
         selectedRecordIds={[recordId]}
         module="Contracts"
       />
