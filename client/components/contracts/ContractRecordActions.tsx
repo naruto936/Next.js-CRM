@@ -26,10 +26,14 @@ import {
 import {
   MassRenewalContractsWidget,
 } from "@/widgets/mass-renewal-contracts";
+import {
+  CREATE_SERVICE_COMPLETION_BUTTON_LABEL,
+  CREATE_SERVICE_COMPLETION_PAGE_PATH,
+} from "@/widgets/create-service-completion";
 
 /** Record-view custom buttons (Zoho-style labels). */
 export const CONTRACT_RECORD_BUTTONS = [
-  "Create Service Completion",
+  CREATE_SERVICE_COMPLETION_BUTTON_LABEL,
   "TestRecordWidget",
   SEND_MESSAGE_BUTTON_LABEL,
   CREATE_CONTRACT_PDF_BUTTON_LABEL,
@@ -50,6 +54,7 @@ export type ContractRecordButtonLabel = (typeof CONTRACT_RECORD_BUTTONS)[number]
 const RENEW_CONTRACT_BUTTON_LABEL = "Renew Contract" as const;
 
 const CONFIGURED_RECORD_BUTTONS = new Set<string>([
+  CREATE_SERVICE_COMPLETION_BUTTON_LABEL,
   SEND_MESSAGE_BUTTON_LABEL,
   CREATE_CONTRACT_PDF_BUTTON_LABEL,
   COMPLIANCE_FIELDS_BUTTON_LABEL,
@@ -80,9 +85,16 @@ export function ContractRecordActions({
   const [inProgressMessage, setInProgressMessage] = useState<string | null>(
     null,
   );
+  const [actionToast, setActionToast] = useState<{
+    tone: "info" | "success" | "error";
+    message: string;
+  } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const actionToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -127,6 +139,7 @@ export function ContractRecordActions({
   useEffect(() => {
     return () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      if (actionToastTimerRef.current) clearTimeout(actionToastTimerRef.current);
     };
   }, []);
 
@@ -139,8 +152,33 @@ export function ContractRecordActions({
     }, 2800);
   }
 
+  function showActionToast(
+    tone: "info" | "success" | "error",
+    message: string,
+    durationMs = 3200,
+  ) {
+    if (actionToastTimerRef.current) clearTimeout(actionToastTimerRef.current);
+    setActionToast({ tone, message });
+    actionToastTimerRef.current = setTimeout(() => {
+      setActionToast(null);
+      actionToastTimerRef.current = null;
+    }, durationMs);
+  }
+
+  function openCreateServiceCompletionTab() {
+    const url = `${CREATE_SERVICE_COMPLETION_PAGE_PATH}?contractId=${encodeURIComponent(recordId)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    showActionToast("info", "Opened Create Service Completion in a new tab.");
+  }
+
   function handleAction(action: ContractRecordButtonLabel) {
     setOpen(false);
+
+    if (action === CREATE_SERVICE_COMPLETION_BUTTON_LABEL) {
+      openCreateServiceCompletionTab();
+      onAction?.(action, recordId);
+      return;
+    }
 
     if (action === SEND_MESSAGE_BUTTON_LABEL) {
       setSendMessageOpen(true);
@@ -311,6 +349,24 @@ export function ContractRecordActions({
           aria-live="polite"
         >
           {inProgressMessage}
+        </div>
+      : null}
+
+      {actionToast ?
+        <div
+          className={cn(
+            "fixed bottom-4 left-1/2 z-[110] max-w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border px-4 py-2.5 text-center text-sm shadow-lg",
+            actionToast.tone === "success" &&
+              "border-emerald-500/30 bg-emerald-50 text-emerald-900 dark:border-emerald-500/40 dark:bg-emerald-950/90 dark:text-emerald-100",
+            actionToast.tone === "error" &&
+              "border-red-500/30 bg-red-50 text-red-900 dark:border-red-500/40 dark:bg-red-950/90 dark:text-red-100",
+            actionToast.tone === "info" &&
+              "border-blue-500/30 bg-blue-50 text-blue-900 dark:border-blue-500/40 dark:bg-blue-950/90 dark:text-blue-100",
+          )}
+          role="status"
+          aria-live="polite"
+        >
+          {actionToast.message}
         </div>
       : null}
     </>

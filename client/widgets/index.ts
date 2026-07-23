@@ -10,6 +10,7 @@ import { OLIO_MASS_UPDATE_WIDGET } from "@/widgets/olio-mass-update";
 import { PO_ADDENDUM_WIDGET } from "@/widgets/po-addendum";
 import { SEND_MESSAGE_WIDGET } from "@/widgets/send-message";
 import { CLONE_CONTRACT_WIDGET } from "@/widgets/clone-contract";
+import { CREATE_SERVICE_COMPLETION_WIDGET } from "@/widgets/create-service-completion";
 
 /**
  * Registry of list-action widgets.
@@ -27,6 +28,7 @@ export const CRM_WIDGETS = [
   COMPLIANCE_FIELDS_WIDGET,
   PO_ADDENDUM_WIDGET,
   CLONE_CONTRACT_WIDGET,
+  CREATE_SERVICE_COMPLETION_WIDGET,
 ] as const satisfies readonly CrmWidgetDefinition[];
 
 export type CrmWidgetId = (typeof CRM_WIDGETS)[number]["id"];
@@ -86,3 +88,8 @@ export {
   CLONE_CONTRACT_WIDGET,
   CloneContractWidget,
 } from "@/widgets/clone-contract";
+export {
+  CREATE_SERVICE_COMPLETION_WIDGET,
+  CREATE_SERVICE_COMPLETION_BUTTON_LABEL,
+  createServiceCompletionFromContract,
+} from "@/widgets/create-service-completion";
